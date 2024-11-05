@@ -113,7 +113,7 @@ function SWEP:OnHit(swingProgress, tr)
 		PickDam:SetInflictor(self)
 		PickDam:SetDamagePosition(StrikePos)
 		PickDam:SetDamageType(DMG_CLUB)
-		PickDam:SetDamage(math.random(30, 50))
+		PickDam:SetDamage(math.random(20, 50))
 		PickDam:SetDamageForce(StrikeVector:GetNormalized() * 30)
 		tr.Entity:TakeDamageInfo(PickDam)
 	end

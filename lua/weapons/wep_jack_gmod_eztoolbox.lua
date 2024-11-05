@@ -283,18 +283,24 @@ end
 function SWEP:GetEZsupplies(resourceType, getter)
 	local BuildSizeMult = self.CurrentBuildSize or 0
 	if IsValid(getter) and getter == self then BuildSizeMult = 0 end
+<<<<<<< HEAD
 	local AvaliableResources = {
 		[JMod.EZ_RESOURCE_TYPES.POWER] = 200,
 		[JMod.EZ_RESOURCE_TYPES.GAS] = 200
+=======
+	local AvailableResources = {
+		[JMod.EZ_RESOURCE_TYPES.POWER] = math.floor(self:GetElectricity() - 8 * BuildSizeMult),
+		[JMod.EZ_RESOURCE_TYPES.GAS] = math.floor(self:GetGas() - 4 * BuildSizeMult)
+>>>>>>> 1e4f32fae9f87c9d4976fb271a5bbb77c51c877d
 	}
 	if resourceType then
-		if AvaliableResources[resourceType] and AvaliableResources[resourceType] > 0 then
-			return AvaliableResources[resourceType]
+		if AvailableResources[resourceType] and AvailableResources[resourceType] > 0 then
+			return AvailableResources[resourceType]
 		else
 			return nil
 		end
 	else
-		return AvaliableResources
+		return AvailableResources
 	end
 end
 
@@ -512,7 +518,9 @@ function SWEP:ModifyMachine(ent, tbl, ammoType)
 		self:Msg("device must be turned off to modify")
 	elseif JMod.HaveResourcesToPerformTask(self:GetOwner():GetShootPos(), 150, { [JMod.EZ_RESOURCE_TYPES.BASICPARTS] = self.ModifcationCost }, self) then
 		local ChangedSomething = false
-		if (ent.GetAmmoType and (ammoType ~= ent:GetAmmoType())) or (ent.GetLiquidType and (ammoType ~= ent:GetLiquidType())) then
+		if (ent.GetAmmoType and (ammoType ~= ent:GetAmmoType())) then
+			ChangedSomething = true
+		elseif (ent.GetLiquidType and (ammoType ~= ent:GetLiquidType())) then
 			ChangedSomething = true
 		else
 			for k, v in pairs(tbl) do
@@ -522,13 +530,15 @@ function SWEP:ModifyMachine(ent, tbl, ammoType)
 			end
 		end
 		if ChangedSomething then
-			JMod.ConsumeResourcesInRange({
+			local SuccessfulConsume = JMod.ConsumeResourcesInRange({
 				[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = self.ModifcationCost
-			}, nil, nil, self)
-			self:UpgradeEffect(ent:GetPos() + Vector(0, 0, 30), 2)
+			}, self.Owner:GetShootPos(), nil, self)
+			
+			if SuccessfulConsume then
+				ent:SetMods(tbl, ammoType)
+				self:UpgradeEffect(ent:GetPos() + Vector(0, 0, 30), 2)
+			end
 		end
-
-		ent:SetMods(tbl, ammoType)
 	else
 		self:Msg("needs " .. tostring(self.ModifcationCost) .. " Basic Parts nearby to perform modification")
 	end

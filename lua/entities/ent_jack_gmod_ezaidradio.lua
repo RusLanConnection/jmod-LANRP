@@ -1,21 +1,23 @@
 ﻿-- Jackarunda 2021
 AddCSLuaFile()
-ENT.Type="anim"
-ENT.Base="ent_jack_gmod_ezmachine_base"
-ENT.PrintName="EZ Aid Radio"
-ENT.Author="Jackarunda"
-ENT.Category="JMod - EZ Machines"
-ENT.Information="glhfggwpezpznore"
-ENT.Spawnable=true
-ENT.AdminSpawnable=true
-ENT.NoSitAllowed=true
-ENT.Model="models/props_phx/oildrum001_explosive.mdl"
-ENT.Mat="models/mat_jack_gmod_ezradio"
-ENT.Mass=150
+ENT.Type = "anim"
+ENT.Base = "ent_jack_gmod_ezmachine_base"
+ENT.PrintName = "EZ Aid Radio"
+ENT.Author = "Jackarunda"
+ENT.Category = "JMod - EZ Machines"
+ENT.Information = "glhfggwpezpznore"
+ENT.Spawnable = true
+ENT.AdminSpawnable = true
 ----
-ENT.JModPreferredCarryAngles=Angle(0,0,0)
-ENT.SpawnHeight=20
+ENT.NoSitAllowed = true
+ENT.Model = "models/props_phx/oildrum001_explosive.mdl"
+ENT.Mat = "models/mat_jack_gmod_ezradio"
+ENT.Mass = 150
+ENT.EZcolorable = true
+ENT.JModPreferredCarryAngles = Angle(0,0,0)
+ENT.SpawnHeight = 20
 ENT.EZradio = true
+ENT.EZbuoyancy = .3
 ----
 ENT.StaticPerfSpecs={
 	MaxDurability=100,
@@ -28,9 +30,9 @@ function ENT:CustomSetupDataTables()
 end
 if(SERVER)then
 	function ENT:CustomInit()
-		local phys = self:GetPhysicsObject()
-		if phys:IsValid()then
-			phys:SetBuoyancyRatio(.3)
+		local Phys = self:GetPhysicsObject()
+		if Phys:IsValid()then
+			Phys:SetBuoyancyRatio(self.EZbuoyancy)
 		end
 
 		---
@@ -138,14 +140,20 @@ if(SERVER)then
 	end
 
 	function ENT:TurnOn(activator)
+		if self:GetState() ~= STATE_OFF then return end
 		if self:WaterLevel() > 0 then return end
-		self:SetState(STATE_CONNECTING)
+		self:StartConnecting(activator)
 		self:EmitSound("snds_jack_gmod/ezsentry_startup.ogg", 65, 100)
+	end
+
+	function ENT:StartConnecting(activator)
+		if (self:GetState() <= STATE_BROKEN) then return end
+		self:SetState(STATE_CONNECTING)
 		self.ConnectionAttempts = 0
 	end
 
 	function ENT:TurnOff()
-		if (self:GetState() <= 0) then return end
+		if (self:GetState() <= STATE_BROKEN) then return end
 		self:SetState(STATE_OFF)
 		self:EmitSound("snds_jack_gmod/ezsentry_shutdown.ogg", 65, 100)
 	end

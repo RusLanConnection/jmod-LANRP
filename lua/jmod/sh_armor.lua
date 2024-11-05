@@ -11,7 +11,7 @@ player_manager.AddValidHands("JMod_HazMat", "models/bloocobalt/splinter cell/che
 		head (if hit angle isn't from front)
 	HITGROUP_CHEST
 		chest (all of HITGROUP_CHEST)
-		back (nonprotective: receives damage but doesn't protect, 1/4)
+		back (all of HITGROUP_CHEST if hit is from back)
 	HITGROUP_STOMACH
 		abdomen (all of HITGROUP_STOMACH)
 	HITGROUP_LEFTLEG
@@ -1047,7 +1047,7 @@ JMod.ArmorTable = {
 		pos = Vector(0.1, -10.1, -0.5),
 		ang = Angle(90, 180, -90),
 		wgt = 30,
-		dur = 20,
+		dur = 50,
 		ent = "ent_jack_gmod_ezarmor_flametank"
 	}
 }

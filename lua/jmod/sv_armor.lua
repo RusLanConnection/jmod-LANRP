@@ -72,7 +72,7 @@ function JMod.EZarmorSync(ply)
 		ply:SetNW2Bool("EZparachuting", false)
 	end
 
-	hook.Run("JModHookEZArmorSync", ply)
+	hook.Run("JMod_EZarmorSync", ply)
 
 	net.Start("JMod_EZarmorSync")
 		net.WriteEntity(ply)
@@ -99,8 +99,10 @@ local function IsHitToBack(ply, dmg)
 	local FacingDir, DmgDir = ply:GetAimVector(), dmg:GetDamageForce():GetNormalized()
 	local ApproachAngle = -math.deg(math.asin(DmgDir:Dot(FacingDir)))
 
-	return ApproachAngle < -45
+	return ApproachAngle < -30
 end
+
+local NonProtectiveSlots = {"ears", "waist"}
 
 local function GetProtectionFromSlot(ply, slot, dmg, dmgAmt, protectionMul, shouldDmgArmor, cumulativeCoverage)
 	local Protection, Busted = 0, false
@@ -220,7 +222,12 @@ function LocationalDmgHandling(ply, hitgroup, dmg)
 				RelevantSlots.head = 1
 			end
 		elseif hitgroup == HITGROUP_CHEST or hitgroup == HITGROUP_GENERIC then
-			RelevantSlots.chest = 1
+			if IsHitToBack(ply, dmg) then
+				RelevantSlots.chest = 1
+				RelevantSlots.back = 1
+			else
+				RelevantSlots.chest = 1
+			end
 		elseif hitgroup == HITGROUP_STOMACH then
 			RelevantSlots.abdomen = .5
 			RelevantSlots.pelvis = .5
@@ -457,7 +464,7 @@ function JMod.RemoveArmorByID(ply, ID, broken)
 	local Ent -- This is for if we can stow stuff in the armor when it's unequpped
 
 	if broken then
-		hook.Run("JModHookArmorRemoved", ply, Info, Specs)
+		hook.Run("JMod_ArmorRemoved", ply, Info, Specs)
 
 		if Specs.eff and Specs.eff.explosive then
 			local FireAmt = (Info.chrg and Info.chrg.fuel and math.random(2, 4)) or 0
@@ -713,13 +720,13 @@ net.Receive("JMod_Inventory", function(ln, ply)
 			end
 
 			if RechargeStatus == 1 then
-				local AvaliableResources, ResourcesToConsume = JMod.CountResourcesInRange(nil, nil, ply), {}
+				local AvailableResources, ResourcesToConsume = JMod.CountResourcesInRange(nil, nil, ply), {}
 
 				for resourceName, missing in pairs(RechargeRecipe) do
 					missing = math.ceil(missing)
-					if AvaliableResources[resourceName] then
-						local AmtToConsume = math.Clamp(AvaliableResources[resourceName], 0, missing)
-						ResourcesToConsume[resourceName] = math.Clamp(AvaliableResources[resourceName], 0, missing)
+					if AvailableResources[resourceName] then
+						local AmtToConsume = math.Clamp(AvailableResources[resourceName], 0, missing)
+						ResourcesToConsume[resourceName] = math.Clamp(AvailableResources[resourceName], 0, missing)
 						ItemData.chrg[resourceName] = math.Clamp(ItemData.chrg[resourceName] + AmtToConsume, 0, ItemInfo.chrg[resourceName])
 
 						if AmtToConsume >= missing then

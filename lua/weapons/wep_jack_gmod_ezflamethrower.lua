@@ -129,7 +129,7 @@ local Backness = 0
 function SWEP:GetViewModelPosition(pos, ang)
 	local FT = FrameTime()
 
-	if (self.Owner:KeyDown(IN_SPEED)) or (self.Owner:KeyDown(IN_ZOOM)) then
+	if IsValid(self.Owner) and ((self.Owner:KeyDown(IN_SPEED)) or (self.Owner:KeyDown(IN_ZOOM))) then
 		Downness = Lerp(FT * 2, Downness, 10)
 	else
 		Downness = Lerp(FT * 2, Downness, 0)
@@ -163,18 +163,18 @@ function SWEP:UpdateNextIdle()
 end
 
 function SWEP:GetEZsupplies(resourceType)
-	local AvaliableResources = {
+	local AvailableResources = {
 		[JMod.EZ_RESOURCE_TYPES.FUEL] = self:GetFuel(),
 		--[JMod.EZ_RESOURCE_TYPES.GAS] = self:GetGas()
 	}
 	if resourceType then
-		if AvaliableResources[resourceType] and AvaliableResources[resourceType] > 0 then
-			return AvaliableResources[resourceType]
+		if AvailableResources[resourceType] and AvailableResources[resourceType] > 0 then
+			return AvailableResources[resourceType]
 		else
 			return nil
 		end
 	else
-		return AvaliableResources
+		return AvailableResources
 	end
 end
 

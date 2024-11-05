@@ -1,16 +1,19 @@
 -- Jackarunda 2021
 AddCSLuaFile()
-ENT.Type="anim"
-ENT.PrintName="EZ Workbench"
-ENT.Author="Jackarunda"
-ENT.Category="JMod - EZ Machines"
-ENT.Information="glhfggwpezpznore"
-ENT.Spawnable=true
-ENT.AdminSpawnable=true
-ENT.RenderGroup=RENDERGROUP_TRANSLUCENT
-ENT.Model="models/jmod/machines/workstations/weaponworkbench01.mdl"
-ENT.Mass=500
-ENT.JModPreferredCarryAngles=Angle(0,180,0)
+ENT.Base = "ent_jack_gmod_ezmachine_base"
+ENT.PrintName = "EZ Workbench"
+ENT.Author = "Jackarunda"
+ENT.Category = "JMod - EZ Machines"
+ENT.Information = "glhfggwpezpznore"
+ENT.Spawnable = true
+ENT.AdminSpawnable = true
+ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
+ENT.Model = "models/jmod/machines/workstations/weaponworkbench01.mdl"
+ENT.Mass = 500
+ENT.JModPreferredCarryAngles = Angle(0,180,0)
+ENT.EZcolorable = true
+ENT.EZbuoyancy = .3
+--
 ENT.EZconsumes={
 	JMod.EZ_RESOURCE_TYPES.BASICPARTS,
 	JMod.EZ_RESOURCE_TYPES.POWER,
@@ -30,10 +33,6 @@ function ENT:CustomSetupDataTables()
 end
 if(SERVER)then
 	function ENT:CustomInit()
-		local phys = self:GetPhysicsObject()
-		if phys:IsValid()then
-			phys:SetBuoyancyRatio(.3)
-		end
 		if self.SpawnFull then
 			self:SetGas(self.MaxGas)
 		else

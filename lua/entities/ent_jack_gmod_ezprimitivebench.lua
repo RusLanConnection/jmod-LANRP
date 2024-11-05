@@ -12,6 +12,7 @@ ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 ENT.Model = "models/jmod/machines/primitive_bench.mdl"
 ENT.Mass = 250
 ENT.JModPreferredCarryAngles = Angle(0, 180, 0)
+ENT.EZbuoyancy = .3
 ENT.EZconsumes = {
 	JMod.EZ_RESOURCE_TYPES.BASICPARTS,
 	JMod.EZ_RESOURCE_TYPES.WOOD,
@@ -50,10 +51,6 @@ function ENT:CustomSetupDataTables()
 end
 if(SERVER)then
 	function ENT:CustomInit()
-		local phys = self:GetPhysicsObject()
-		if phys:IsValid()then
-			phys:SetBuoyancyRatio(.3)
-		end
 		if not(self.EZowner)then self:SetColor(Color(255, 255, 255)) end
 		self:UpdateConfig()
 		self:SetProgress(0)
@@ -395,7 +392,7 @@ elseif(CLIENT)then
 				DisplayAng:RotateAroundAxis(Forward, 90)
 				DisplayAng:RotateAroundAxis(Up, 90)
 				local Opacity = math.random(50, 200)
-				cam.Start3D2D(BasePos - Up * 30 + Right * 45 + Forward * 18.5, DisplayAng, .04)
+				cam.Start3D2D(BasePos + Up * -40 + Right * 50 + Forward * 2, DisplayAng, .04)
 					--draw.SimpleTextOutlined("JMOD","JMod-Display",0,0,Color(255,255,255,Opacity),TEXT_ALIGN_CENTER,TEXT_ALIGN_TOP,3,Color(0,0,0,Opacity))
 					local ProFrac = self:GetProgress() / 100
 					local OreFrac = self:GetOre() / self.MaxOre

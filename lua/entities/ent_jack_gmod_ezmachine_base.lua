@@ -13,10 +13,10 @@ ENT.Model="models/props_lab/reciever01d.mdl"
 ENT.Mass = 150
 ENT.IsJackyEZmachine = true
 ----
-ENT.EZconsumes={
+ENT.EZconsumes=nil--[[{
 	JMod.EZ_RESOURCE_TYPES.BASICPARTS, 
 	JMod.EZ_RESOURCE_TYPES.POWER
-}
+}--]]
 ENT.FlexFuels = nil -- "Flex Fuels" are other resource types that the machine will load as electricity
 --- These stats do not change when the machine is upgraded
 ENT.StaticPerfSpecs={ 
@@ -109,6 +109,10 @@ if(SERVER)then
 	function ENT:Initialize()
 		self.StaticPerfSpecs.BaseClass=nil
 		self.DynamicPerfSpecs.BaseClass=nil
+		self.EZconsumes = self.EZconsumes or {
+			JMod.EZ_RESOURCE_TYPES.BASICPARTS, 
+			JMod.EZ_RESOURCE_TYPES.POWER
+		}
 		--
 		self:SetModel(self.Model)
 		if(self.Mat)then
@@ -119,13 +123,15 @@ if(SERVER)then
 		self:SetSolid(SOLID_VPHYSICS)
 		self:DrawShadow(true)
 		self:SetUseType(SIMPLE_USE)
-		local phys = self:GetPhysicsObject()
+		local Phys = self:GetPhysicsObject()
 		timer.Simple(0, function()
-			if phys:IsValid() then
-				phys:Wake()
-				phys:SetMass(self.Mass)
+			if Phys:IsValid() then
+				Phys:Wake()
+				if self.Mass then
+					Phys:SetMass(self.Mass)
+				end
 				if self.EZbuoyancy then
-					phys:SetBuoyancyRatio(self.EZbuoyancy)
+					Phys:SetBuoyancyRatio(self.EZbuoyancy)
 				end
 			end
 		end)
@@ -216,14 +222,16 @@ if(SERVER)then
 		if self.GetProgress then
 			WireLib.TriggerOutput(self, "Progress", self:GetProgress())
 		end
-		for _, typ in ipairs(self.EZconsumes) do
+		for _, typ in pairs(self.EZconsumes) do
 			if typ == JMod.EZ_RESOURCE_TYPES.BASICPARTS then
 				WireLib.TriggerOutput(self, "Durability", self.Durability)
 			else
 				if istable(self.FlexFuels) and table.HasValue(self.FlexFuels, typ) then
 					WireLib.TriggerOutput(self, "FlexFuel", self:GetElectricity())
+				elseif self.GetAmmoType and self.AmmoRefundTable and (self.AmmoRefundTable[self:GetAmmoType()].spawnType == typ) then
+					WireLib.TriggerOutput(self, "Ammo", self:GetAmmo())
 				else
-					local MethodName = JMod.EZ_RESOURCE_TYPE_METHODS[typ]
+					local MethodName = JMod.EZ_RESOURCE_TYPE_METHODS[RealType]
 					if MethodName then
 						local ResourceGetMethod = self["Get"..MethodName]
 						if ResourceGetMethod then
