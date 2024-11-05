@@ -1032,7 +1032,7 @@ JMod.ArmorTable = {
 		},
 		chrg = {
 			fuel = 200,
-			gas = 200,
+			--gas = 200,
 		},
 		eff = {
 			weapon = "wep_jack_gmod_ezflamethrower",

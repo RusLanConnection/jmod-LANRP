@@ -69,8 +69,20 @@ if SERVER then
 		self:SetPos(self:GetPos() + Vector(0, 0, 20))
 		
 		self:SetColor(Color(100, 100, 100))
-		squad.SpawnsBase[self] = nil
+
+		local owner = JMod.GetEZowner(self)
+
 		self:SetBaseTitle("none")
+
+		if IsValid(owner) then
+			if owner:GetSquadID() == -1 then return end
+		else
+			return
+		end
+
+		local squad = SquadMenu:GetSquad(owner:GetSquadID())
+
+		squad.SpawnsBase[self] = nil
 	end
 
 	function ENT:UnRoll()

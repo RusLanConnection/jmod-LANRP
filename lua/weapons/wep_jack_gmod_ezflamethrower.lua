@@ -32,9 +32,9 @@ SWEP.Secondary.Automatic = true
 SWEP.Secondary.Ammo = "none"
 --SWEP.ShowWorldModel = true
 
-SWEP.EZconsumes = {JMod.EZ_RESOURCE_TYPES.FUEL, JMod.EZ_RESOURCE_TYPES.GAS}
+SWEP.EZconsumes = {JMod.EZ_RESOURCE_TYPES.FUEL--[[, JMod.EZ_RESOURCE_TYPES.GAS]]}
 SWEP.MaxFuel = 200
-SWEP.MaxGas = 200
+--SWEP.MaxGas = 200
 
 SWEP.VElements = {
 	--
@@ -64,7 +64,7 @@ function SWEP:Initialize()
 	end)--]]
 	self:Deploy()
 
-	self:SetGas(0)
+	--self:SetGas(0)
 	self:SetFuel(0)
 end
 
@@ -152,7 +152,7 @@ end
 
 function SWEP:SetupDataTables()
 	self:NetworkVar("Int", 0, "Fuel")
-	self:NetworkVar("Int", 1, "Gas")
+	--self:NetworkVar("Int", 1, "Gas")
 	self:NetworkVar("Int", 3, "State")
 end
 
@@ -165,7 +165,7 @@ end
 function SWEP:GetEZsupplies(resourceType)
 	local AvaliableResources = {
 		[JMod.EZ_RESOURCE_TYPES.FUEL] = self:GetFuel(),
-		[JMod.EZ_RESOURCE_TYPES.GAS] = self:GetGas()
+		--[JMod.EZ_RESOURCE_TYPES.GAS] = self:GetGas()
 	}
 	if resourceType then
 		if AvaliableResources[resourceType] and AvaliableResources[resourceType] > 0 then
@@ -242,12 +242,12 @@ function SWEP:PrimaryAttack()
 	self:SetNextPrimaryFire(Time + NextAttackTime)
 
 	if SERVER then
-		local Fuel, Gas, State = self:GetFuel(), self:GetGas(), self:GetState()
-		local HasFuel = (Fuel > 0) and (Gas > 0)
+		local Fuel, --[[Gas,]] State = self:GetFuel(), --[[self:GetGas(),]] self:GetState()
+		local HasFuel = (Fuel > 0) --[[and (Gas > 0)]]
 
 		if not(HasFuel) then
 			self:Cease()
-			self:Msg("Out of fuel and/or gas!\nPress Alt+Use on resource container to refill.")
+			self:Msg("Out of fuel\nPress Alt+Use on resource container to refill.")
 		else
 			local FirePos, FireAng = self:GetNozzle()
 			local FireUp, FireRight, FireForward = FireAng:Up(), FireAng:Right(), FireAng:Forward()
@@ -307,7 +307,7 @@ function SWEP:PrimaryAttack()
 				Flame:Activate()
 				local DrainMult = JMod.Config.Weapons.FlamethrowerFuelDrainMult or 1
 				self:SetEZsupplies(JMod.EZ_RESOURCE_TYPES.FUEL, math.Clamp(Fuel - 1 * DrainMult, 0, 100))
-				self:SetEZsupplies(JMod.EZ_RESOURCE_TYPES.GAS, math.Clamp(Gas - 1 * DrainMult, 0, 100))
+				--self:SetEZsupplies(JMod.EZ_RESOURCE_TYPES.GAS, math.Clamp(Gas - 1 * DrainMult, 0, 100))
 			end
 			self.NextExtinguishTime = Time + NextAttackTime * 2
 		end
@@ -530,7 +530,7 @@ function SWEP:Think()
 		if self.EZarmorID and self.Owner.EZarmor and self.Owner.EZarmor.items[self.EZarmorID] then
 			local ArmorItem = self.Owner.EZarmor.items[self.EZarmorID]
 			self:SetFuel(ArmorItem.chrg.fuel)
-			self:SetGas(ArmorItem.chrg.gas)
+			--self:SetGas(ArmorItem.chrg.gas)
 		end
 	end
 end
@@ -545,7 +545,7 @@ function SWEP:DrawHUD()
 	local W, H = ScrW(), ScrH()
 
 	draw.SimpleTextOutlined("Fuel: "..math.floor(self:GetFuel()), "Trebuchet24", W * .1, H * .5, Color(255, 255, 255, 100), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 3, Color(0, 0, 0, 50))
-	draw.SimpleTextOutlined("Gas: "..math.floor(self:GetGas()), "Trebuchet24", W * .1, H * .5 + 30, Color(255, 255, 255, 100), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 3, Color(0, 0, 0, 50))
+	--draw.SimpleTextOutlined("Gas: "..math.floor(self:GetGas()), "Trebuchet24", W * .1, H * .5 + 30, Color(255, 255, 255, 100), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 3, Color(0, 0, 0, 50))
 end
 
 ----------------- sck -------------------

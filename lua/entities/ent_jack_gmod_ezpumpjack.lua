@@ -17,7 +17,7 @@ ENT.EZanchorage = 2000
 ---
 ENT.WhitelistedResources = {JMod.EZ_RESOURCE_TYPES.WATER, JMod.EZ_RESOURCE_TYPES.OIL}
 ---
-ENT.EZupgradable = true
+ENT.EZupgradable = false
 ENT.StaticPerfSpecs = {
 	MaxDurability = 400,
 	MaxElectricity = 400,

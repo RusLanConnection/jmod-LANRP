@@ -24,7 +24,7 @@ ENT.AmmoTypes = {
 	-- default stats --
 	["Buckshot"] = {
 		FireRate = .4,
-		Damage = .35,
+		Damage = 3,
 		ShotCount = 8,
 		Accuracy = .7,
 		BarrelLength = .75,
@@ -39,13 +39,13 @@ ENT.AmmoTypes = {
 		FireRate = .75,
 		Damage = .3
 	}, -- Armor Piercing Incendiary, pierces through things and lights fires]]
-	["HE Grenade"] = {
+	--[[["HE Grenade"] = {
 		MaxAmmo = .25,
 		FireRate = .3,
 		Damage = 3,
 		Accuracy = .8,
 		BarrelLength = .75
-	}, -- explosive projectile
+	}, -- explosive projectile]]
 	--[[["Rocket Launcher"] = {
 		MaxAmmo = .20,
 		FireRate = .05,

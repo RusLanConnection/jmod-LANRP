@@ -125,7 +125,7 @@ JMod.ResourceDepositInfo = {
 			rock = 2
 		}
 	},
-	[JMod.EZ_RESOURCE_TYPES.IRONORE] = {
+	[JMod.EZ_RESOURCE_TYPES.STEEL] = {
 		frequency = 12,
 		avgamt = 700,
 		avgsize = 200,
@@ -158,7 +158,7 @@ JMod.ResourceDepositInfo = {
 			rock = 2
 		}
 	},]]
-	[JMod.EZ_RESOURCE_TYPES.COPPERORE] = {
+	[JMod.EZ_RESOURCE_TYPES.COPPER] = {
 		frequency = 10,
 		avgamt = 500,
 		avgsize = 200,
@@ -169,7 +169,7 @@ JMod.ResourceDepositInfo = {
 			rock = 2
 		}
 	},
-	[JMod.EZ_RESOURCE_TYPES.TUNGSTENORE] = {
+	[JMod.EZ_RESOURCE_TYPES.TUNGSTEN] = {
 		frequency = 4,
 		avgamt = 300,
 		avgsize = 100,
@@ -191,7 +191,7 @@ JMod.ResourceDepositInfo = {
 			rock = 2
 		}
 	},]]
-	[JMod.EZ_RESOURCE_TYPES.SILVERORE] = {
+	[JMod.EZ_RESOURCE_TYPES.SILVER] = {
 		frequency = 3,
 		avgamt = 300,
 		avgsize = 100,
@@ -202,7 +202,7 @@ JMod.ResourceDepositInfo = {
 			rock = 2
 		}
 	},
-	[JMod.EZ_RESOURCE_TYPES.GOLDORE] = {
+	[JMod.EZ_RESOURCE_TYPES.GOLD] = {
 		frequency = 2,
 		avgamt = 300,
 		avgsize = 100,
