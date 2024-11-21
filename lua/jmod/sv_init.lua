@@ -236,7 +236,7 @@ function JMod.FalloutIrradiate(self, obj)
 		---
 		local DmgTaken = Helf - obj:Health()
 
-		if (DmgTaken > 0) and JMod.Config.Explosives.Nuke.RadiationSickness then
+		if (DmgTaken > 1) and JMod.Config.Explosives.Nuke.RadiationSickness then
 			obj.EZirradiated = (obj.EZirradiated or 0) + DmgTaken * 3
 
 			timer.Simple(10, function()
@@ -1019,17 +1019,18 @@ hook.Add("PlayerDeath", "JMOD_SERVER_PLAYERDEATH", function(ply, inflictor, atta
 	local ShouldInvDrop = JMod.Config.QoL.JModInvDropOnDeath
 	if (ply.JModInv and (ShouldInvDrop or ShouldJModCorpse)) then
 		local PlyPos = ply:GetPos()
+		local ShouldTransfer = ShouldJModCorpse and not ShouldInvDrop
 		for _, v in ipairs(ply.JModInv.items) do
 			local RandomVec = Vector(math.random(-100, 100), math.random(-100, 100), math.random(0, 100))
-			local Removed = JMod.RemoveFromInventory(ply, v.ent, PlyPos + RandomVec, false, ShouldJModCorpse and not ShouldInvDrop)
-			if ShouldJModCorpse and IsValid(Removed) then
+			local Removed = JMod.RemoveFromInventory(ply, v.ent, PlyPos + RandomVec, false, ShouldTransfer)
+			if ShouldTransfer and IsValid(Removed) then
 				JMod.AddToInventory(EZcorpse.EZragdoll, Removed)
 			end
 		end
 		for typ, amt in pairs(ply.JModInv.EZresources) do
 			local RandomVec = Vector(math.random(-100, 100), math.random(-100, 100), math.random(0, 100))
-			local RemovedTyp, Removed = JMod.RemoveFromInventory(ply, {typ, amt}, PlyPos + RandomVec, false, ShouldJModCorpse and not ShouldInvDrop)
-			if ShouldJModCorpse then
+			local RemovedTyp, Removed = JMod.RemoveFromInventory(ply, {typ, amt}, PlyPos + RandomVec, false, ShouldTransfer)
+			if ShouldTransfer then
 				JMod.AddToInventory(EZcorpse.EZragdoll, {RemovedTyp, Removed})
 			end
 		end

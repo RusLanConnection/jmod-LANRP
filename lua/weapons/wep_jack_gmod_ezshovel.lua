@@ -157,6 +157,12 @@ function SWEP:OnHit(swingProgress, tr)
 			JMod.MachineSpawnResource(self, JMod.EZ_RESOURCE_TYPES.SAND, 200, self:WorldToLocal(tr.HitPos + Vector(0, 0, 8)), Angle(0, 0, 0), nil, 200)
 		end
 
+		local Dirt = EffectData()
+		Dirt:SetOrigin(tr.HitPos)
+		Dirt:SetNormal(tr.HitNormal)
+		Dirt:SetScale(2)
+		util.Effect("eff_jack_sminebury", Dirt, true, true)
+
 		if (math.random(1, 1000) == 1) then 
 			local Deposit = JMod.GetDepositAtPos(nil, tr.HitPos, 1.5) 
 			if ((tr.MatType == MAT_SAND) or (JMod.NaturalResourceTable[Deposit] and JMod.NaturalResourceTable[Deposit].typ == JMod.EZ_RESOURCE_TYPES.SAND)) then

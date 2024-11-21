@@ -988,7 +988,8 @@ function JMod.EZprogressTask(ent, pos, deconstructor, task, mult)
 				JMod.DepleteNaturalResource(DepositKey, AmtToProduce)
 			end
 
-			JMod.MachineSpawnResource(ent, JMod.NaturalResourceTable[DepositKey].typ, AmtToProduce, ent:WorldToLocal(pos + Vector(0, 0, 8)), Angle(0, 0, 0), nil, 100)
+			local SpawnPos = ent:WorldToLocal(pos + Vector(0, 0, 8))
+			JMod.MachineSpawnResource(ent, DepositInfo.typ, AmtToProduce, SpawnPos, Angle(0, 0, 0), SpawnPos, 100)
 			ent:SetNW2Float("EZminingProgress", 0)
 			ent.EZpreviousMiningPos = nil
 			JMod.ResourceEffect(JMod.NaturalResourceTable[DepositKey].typ, pos, nil, 1, 1, 1, 5)

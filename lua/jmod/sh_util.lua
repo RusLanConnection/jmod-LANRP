@@ -166,12 +166,7 @@ end
 
 function JMod.VisCheck(pos, target, sourceEnt)
 	local filter = {}
-	pos = pos or (sourceEnt and sourceEnt:LocalToWorld(sourceEnt:OBBCenter()))
-	local targetclass = target:GetClass()
-
-	if sourceEnt:IsWeapon() then
-		pos = sourceEnt:GetOwner():EyePos()
-	end
+	pos = pos or (IsValid(sourceEnt) and sourceEnt:LocalToWorld(sourceEnt:OBBCenter()))
 
 	if sourceEnt then
 		table.insert(filter, sourceEnt)
@@ -218,7 +213,7 @@ function JMod.CountResourcesInRange(pos, range, sourceEnt, cache)
 			end
 		end 
 		if obj.JModInv and JMod.VisCheck(pos, obj, sourceEnt) then
-			local Supplies = obj.JModInv.EZresources
+			local Supplies = obj.JModInv.EZresources or {}
 			for k, v in pairs(Supplies) do
 				if k ~= "generic" then 
 					Results[k] = (Results[k] or 0) + v

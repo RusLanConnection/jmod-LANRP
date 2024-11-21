@@ -122,6 +122,8 @@ if(SERVER)then
 				self:SetProgress(self:GetProgress() + PowerToProduce)
 
 				if self:GetProgress() >= 100 then self:ProduceResource() end
+			elseif State == STATE_BROKEN then
+				JMod.DamageSpark(self)
 			end
 		end
 
@@ -181,7 +183,7 @@ elseif(CLIENT)then
 		self:DrawModel()
 		---
 		local CylinderAng = SelfAng:GetCopy()
-		CylinderAng:RotateAroundAxis(Right, 0)
+		--CylinderAng:RotateAroundAxis(Right, 0)
 		JMod.RenderModel(self.Cylinder, BasePos + Up * 18.5, CylinderAng, Vector(0.26, 0.26, 1), nil, JMod.EZ_GRADE_MATS[Grade])
 		
 		if DetailDraw then

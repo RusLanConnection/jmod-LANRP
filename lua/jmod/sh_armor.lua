@@ -346,50 +346,32 @@ JMod.ArmorTable = {
 			ang = Angle(100, 0, 90)
 		}
 	},
-	["Nazi-helmet"] = {
-		PrintName = "Nazi-helmet",
-		mdl = "models/parts/german_helmet.mdl", -- tarkov
+	["Glasses"] = {
+		PrintName = "Glasses",
+		mdl = "models/jmod/glasses_classic.mdl", -- csgo misc?
 		slots = {
-			head = .6
+			eyes = 1
 		},
-		def = BasicArmorProtectionProfile,
+		def = NonArmorProtectionProfile,
 		bon = "ValveBiped.Bip01_Head1",
-		siz = Vector(1.05, 1, 1.07),
-		pos = Vector(1.4, -3, 1),
+		siz = Vector(1, 1, 1),
+		pos = Vector(2, 2.4, 0.1),
 		ang = Angle(-80, 0, -90),
-		wgt = 10,
-		dur = 200,
-		ent = "ent_jack_gmod_ezarmor_nazihead"
-	},
-	--[[["Brodie-helmet"] = {
-		PrintName = "Brodie-helmet",
-		mdl = "models/codww2/gear/allies/brodie_helmet.mdl", -- tarkov
-		slots = {
-			head = .6
+		mskmat = "mats_jack_gmod_sprites/glasses",
+		wgt = 1,
+		dur = 2,
+		ent = "ent_jack_gmod_ezarmor_glasses",
+		eff = {
+			glasses = true
 		},
-		def = BasicArmorProtectionProfile,
-		bon = "ValveBiped.Bip01_Head1",
-		siz = Vector(0.9, 1, 1),
-		pos = Vector(2.2, -2, 0),
-		ang = Angle(-90, 20, 0),
-		wgt = 10,
-		dur = 200,
-		ent = "ent_jack_gmod_ezarmor_brodiehead"
-	},]]
-	["schirmmuetze"] = {
-		PrintName = "schirmmuetze",
-		mdl = "models/codww2/german/schirmmuetze.mdl", -- tarkov
-		slots = {
-			head = 0
-		},
-		def = BasicArmorProtectionProfile,
-		bon = "ValveBiped.Bip01_Head1",
-		siz = Vector(1, 1.1, 1),
-		pos = Vector(1, 1.4, 0.1),
-		ang = Angle(-90, -25, 180),
-		wgt = 10,
-		dur = 200,
-		ent = "ent_jack_gmod_ezarmor_schirmmuetze"
+		--[[tgl = {
+			eff = {},
+			slots = {
+				eyes = 0
+			},
+			pos = Vector(1.5, -2.5, .1),
+			ang = Angle(100, 0, 90)
+		}--]]
 	},
 	["Light-Helmet"] = {
 		PrintName = "Helmet-Light",
