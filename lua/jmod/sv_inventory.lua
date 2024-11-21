@@ -2,15 +2,6 @@
 JMod.DEFAULT_INVENTORY = {EZresources = {}, items = {}, weight = 0, volume = 0, maxVolume = 0}
 JMod.GRABDISTANCE = 70
 
-function JMod.EZ_Open_Inventory(ply)
-	JMod.Hint(ply, "scrounge")
-	JMod.UpdateInv(ply)
-	net.Start("JMod_Inventory")
-		net.WriteString(ply:GetModel())
-		net.WriteTable(ply.JModInv)
-	net.Send(ply)
-end
-
 function JMod.GetStorageCapacity(ent)
 	if not(IsValid(ent)) then return 0 end
 	if ent.IsJackyEZcrate then return 0 end
@@ -34,7 +25,6 @@ function JMod.GetStorageCapacity(ent)
 		Capacity = ent.EZstorageSpace or ent.MaxItems
 	elseif IsValid(Phys) and (ent:GetClass() == "prop_physics") then
 		local Vol = Phys:GetVolume()
-		print(Vol)
 		if Vol ~= nil then
 			local SurfID = util.GetSurfaceIndex(Phys:GetMaterial())
 			if SurfID then
@@ -48,7 +38,7 @@ function JMod.GetStorageCapacity(ent)
 			end
 		end
 	end
-	return Capacity
+	return Capacity * JMod.Config.QoL.InventorySizeMult
 end
 
 function JMod.GetItemVolumeWeight(ent)
@@ -121,36 +111,33 @@ function JMod.UpdateInv(invEnt, noplace, transfer)
 					table.insert(RemovedItems, Removed)
 				end
 			else
-				local Removed = JMod.RemoveFromInventory(invEnt, v.ent, not(noplace) and TrPos, true, transfer)
+				local Removed = JMod.RemoveFromInventory(invEnt, iteminfo.ent, not(noplace) and TrPos, true, transfer)
 				table.insert(RemovedItems, Removed)
 			end
-			table.insert(jmodinvfinal.items, v)
+			table.insert(jmodinvfinal.items, iteminfo)
 		end
 	end
 	for typ, amt in pairs(invEnt.JModInv.EZresources) do
-		if isstring(typ) then
-			if amt > 0 then
-				local ResourceWeight = (JMod.EZ_RESOURCE_INV_WEIGHT / JMod.Config.ResourceEconomy.MaxResourceMult)
-				if (Capacity < (jmodinvfinal.volume + (amt * ResourceWeight))) then
-					local Overflow = (amt * ResourceWeight) - (Capacity - jmodinvfinal.volume)
-					local OverflowResult = math.Round((amt - Overflow) * ResourceWeight)
-					if Overflow > 0 then
-						local Removed, amt = JMod.RemoveFromInventory(invEnt, {typ, Overflow / ResourceWeight}, not(noplace) and (EntPos + Vector(math.random(-100, 100), math.random(-100, 100), math.random(100, 100))), true)
-						table.insert(RemovedItems, {Removed, amt})
-					end
-					jmodinvfinal.weight = jmodinvfinal.weight + OverflowResult
-					jmodinvfinal.volume = jmodinvfinal.volume + OverflowResult
-					jmodinvfinal.EZresources[typ] = math.Round(amt - Overflow / ResourceWeight)
-				else
-					jmodinvfinal.weight = jmodinvfinal.weight + math.Round((amt * ResourceWeight))
-					jmodinvfinal.volume = jmodinvfinal.volume + math.Round((amt * ResourceWeight))
-					jmodinvfinal.EZresources[typ] = math.Round(amt)
+		if isstring(typ) and (amt > 0) then
+			local ResourceWeightFactor = (JMod.EZ_RESOURCE_INV_WEIGHT / JMod.Config.ResourceEconomy.MaxResourceMult)
+			local ResourceWeight = amt * ResourceWeightFactor
+			if (Capacity < (jmodinvfinal.volume + (ResourceWeight))) then
+				local Overflow = (ResourceWeight) - (Capacity - jmodinvfinal.volume)
+				local OverflowResult = math.Round((amt - Overflow) * ResourceWeightFactor)
+				if Overflow > 0 then
+					local Removed, amt = JMod.RemoveFromInventory(invEnt, {typ, Overflow / ResourceWeight}, not(noplace) and (EntPos + Vector(math.random(-100, 100), math.random(-100, 100), math.random(100, 100))), true)
+					table.insert(RemovedItems, {Removed, amt})
 				end
+				jmodinvfinal.weight = jmodinvfinal.weight + OverflowResult
+				jmodinvfinal.volume = jmodinvfinal.volume + (OverflowResult)
+				jmodinvfinal.EZresources[typ] = math.Round(amt - Overflow / ResourceWeight)
+			else
+				jmodinvfinal.weight = jmodinvfinal.weight + math.Round(ResourceWeight)
+				jmodinvfinal.volume = jmodinvfinal.volume + math.Round(ResourceWeight)
+				jmodinvfinal.EZresources[typ] = math.Round(amt)
 			end
 		end
 	end
-
-	jmodinvfinal.maxVolume = Capacity
 
 	invEnt.JModInv = jmodinvfinal
 	if not(invEnt:IsPlayer() or invEnt.KeepJModInv) and table.IsEmpty(invEnt.JModInv.EZresources) and table.IsEmpty(invEnt.JModInv.items) then
@@ -186,7 +173,7 @@ function JMod.AddToInventory(invEnt, target, noUpdate)
 	if AddingResource then
 		local res, amt = target[1], target[2] or Capacity
 		if IsValid(res) and res.IsJackyEZresource then
-			local SuppliesLeft = res:GetEZsupplies(res.EZsupplies) -- You better not return nil
+			local SuppliesLeft = res:GetEZsupplies(res.EZsupplies) or 0
 			jmodinv.EZresources[res.EZsupplies] = (jmodinv.EZresources[res.EZsupplies] or 0) + math.min(SuppliesLeft, amt)
 			res:SetEZsupplies(res.EZsupplies, SuppliesLeft - (amt or SuppliesLeft))
 			JMod.ResourceEffect(res.EZsupplies, res:LocalToWorld(res:OBBCenter()), invEnt:LocalToWorld(invEnt:OBBCenter()), 1, 1, 1)
@@ -196,8 +183,27 @@ function JMod.AddToInventory(invEnt, target, noUpdate)
 	elseif IsValid(target) then
 		target:ForcePlayerDrop()
 		constraint.RemoveAll(target)
-		target.EZInvOwner = invEnt
-		target:SetParent(invEnt)
+		target:SetNW2Entity("EZInvOwner", invEnt)
+
+		local BoneID = invEnt:LookupBone("ValveBiped.Bip01_Spine1")
+
+		if BoneID then
+			target.EZoldMoveType = target:GetMoveType()
+			target.EZoldNoBoneFollow = target:IsEffectActive(EF_FOLLOWBONE)
+			if not(target.EZoldNoBoneFollow) then
+				target:AddEffects(EF_FOLLOWBONE)
+			end
+			target:SetMoveType(MOVETYPE_NONE)
+			target:SetParent(invEnt, BoneID)
+
+			local Pos, Ang = invEnt:GetBonePosition(BoneID)
+			target:SetPos(Pos)
+			target:SetAngles(Ang)
+		else
+			target:SetParent(invEnt)
+			target:SetPos(invEnt:OBBCenter())
+			target:SetAngles(Angle(0, 0, 0))
+		end
 		--[[local InvMin, InvMax, targMin, targMax = invEnt:OBBMins(), invEnt:OBBMaxs(), target:OBBMins(), target:OBBMaxs()
 		local PosToFit = Vector(invEnt:OBBCenter())
 		for i = 1, 3 do
@@ -220,8 +226,8 @@ function JMod.AddToInventory(invEnt, target, noUpdate)
 		local Children = target:GetChildren()
 		if Children then
 			for k, v in pairs(Children) do
-				v.EZnoDraw = v:GetNoDraw()
-				v.EZnoSolid = v:IsSolid()
+				v.JModWasNoDraw = v:GetNoDraw()
+				v.JModWasNoSolid = v:IsSolid()
 				v:SetNoDraw(true)
 				v:SetNotSolid(true)
 			end
@@ -296,6 +302,9 @@ function JMod.RemoveFromInventory(invEnt, target, pos, noUpdate, transfer)
 			local Phys = target:GetPhysicsObject()
 			timer.Simple(0, function()
 				if IsValid(Phys) then
+					--if IsValid(target.JModInventoryAnchor) then
+					--	target.JModInventoryAnchor:Remove()
+					--end
 					Phys:EnableMotion(true)
 					Phys:Wake()
 					if IsValid(invEnt) and IsValid(invEnt:GetPhysicsObject()) then
@@ -306,8 +315,8 @@ function JMod.RemoveFromInventory(invEnt, target, pos, noUpdate, transfer)
 			local Children = target:GetChildren()
 			if Children then
 				for k, v in pairs(Children) do
-					v:SetNoDraw(v.EZnoDraw or false)
-					v:SetNotSolid(v.EZnoSolid or false)
+					v:SetNoDraw(v.JModWasNoDraw or false)
+					v:SetNotSolid(v.JModWasNoSolid or false)
 				end
 			end
 		end
@@ -337,18 +346,16 @@ hook.Add("JMod_OnInventoryRemove", "JMod_OnInventoryRemove", function(invEnt, ta
 end)
 
 local pickupWhiteList = {
-	--["prop_ragdoll"] = true,
+	["prop_ragdoll"] = false,
 	["prop_physics"] = true,
 	["prop_physics_multiplayer"] = true
 }
 
 local CanPickup = function(ent)
 	if not(IsValid(ent)) then return false end
-	if ent:IsNPC() then return false end
-	if ent:IsPlayer() then return false end
-	if ent:IsWorld() then return false end
+	if not(ent.JModEZstorable or ent.IsJackyEZresource) then return pickupWhiteList[ent:GetClass()] or false end
+	if ent:IsNPC() or ent:IsPlayer() or ent:IsWorld() then return false end
 	if string.find("func_", ent:GetClass()) then return false end
-	--if pickupWhiteList[ent:GetClass()] then return true end
 	if CLIENT then return true end
 	if IsValid(ent:GetPhysicsObject()) and (ent:GetPhysicsObject():IsMotionEnabled()) then return true end
 
@@ -445,7 +452,7 @@ net.Receive("JMod_ItemInventory", function(len, ply)
 		sound.Play("snd_jack_clothequip.ogg", Tr.HitPos, 60, math.random(90, 110)) --"snds_jack_gmod/equip"..math.random(1, 5)..".ogg"
 	elseif command == "stow_res" then
 		if not(CanSeeNonPlyInv) then return end
-		local amt = math.Clamp(desiredAmt, 0, invEnt.JModInv.EZresources[resourceType] or 0)
+		local amt = math.Clamp(desiredAmt, 0, ply.JModInv.EZresources[resourceType] or 0)
 		if not JMod.AddToInventory(invEnt, {resourceType, amt}) then
 			if invEnt.EZconsumes and table.HasValue(invEnt.EZconsumes, resourceType) then
 				amt = invEnt:TryLoadResource(resourceType, amt)
@@ -485,8 +492,7 @@ function JMod.EZ_GrabItem(ply, cmd, args)
 			net.WriteTable(TargetEntity.JModInv)
 		net.Send(ply)
 		sound.Play("snd_jack_clothequip.ogg", ply:GetPos(), 50, math.random(90, 110))
-	--elseif TargetEntity.IsEZcorpse then
-	elseif not(TargetEntity:IsConstrained()) and ((pickupWhiteList[TargetEntity:GetClass()] and CanPickup(TargetEntity)) or TargetEntity.JModEZstorable or TargetEntity.IsJackyEZresource) then
+	elseif not(TargetEntity:IsConstrained()) and CanPickup(TargetEntity) then
 		JMod.UpdateInv(ply)
 		local RoomLeft = math.floor((ply.JModInv.maxVolume) - (ply.JModInv.volume))
 		if RoomLeft > 0 then
@@ -526,6 +532,15 @@ function JMod.EZ_GrabItem(ply, cmd, args)
 			JMod.Hint(ply,"hint item inventory full")
 		end
 	end
+end
+
+function JMod.EZ_Open_Inventory(ply)
+	JMod.Hint(ply, "scrounge")
+	JMod.UpdateInv(ply)
+	net.Start("JMod_Inventory")
+		net.WriteString(ply:GetModel())
+		net.WriteTable(ply.JModInv)
+	net.Send(ply)
 end
 
 concommand.Add("jmod_ez_quicknade", function(ply, cmd, args)

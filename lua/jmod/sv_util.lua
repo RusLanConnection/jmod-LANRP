@@ -248,98 +248,6 @@ function JMod.PackageObject(ent, pos, ang, ply)
 	return Bocks
 end
 
-local WreckBlacklist = {"gmod_lamp", "gmod_cameraprop", "gmod_light", "ent_jack_gmod_nukeflash", "ent_jack_gmod_ezoilfire"}
-
-function JMod.WreckBuildings(blaster, pos, power, range, ignoreVisChecks)
-	local origPower = power
-	power = power * JMod.Config.Explosives.PropDestroyPower
-	local maxRange = 250 * power * (range or 1) -- todo: this still doesn't do what i want for the nuke
-	local maxMassToDestroy = 10 * power ^ .8
-	local masMassToLoosen = 30 * power
-	local allProps = ents.FindInSphere(pos, maxRange)
-
-	for k, prop in pairs(allProps) do
-		if not (table.HasValue(WreckBlacklist, prop:GetClass()) or (prop.ExplProof == true) or hook.Run("JMod_CanDestroyProp", prop, blaster, pos, power, range, ignoreVisChecks) == false) then
-			local physObj = prop:GetPhysicsObject()
-			local propPos = prop:LocalToWorld(prop:OBBCenter())
-			local DistFrac = 1 - propPos:Distance(pos) / maxRange
-			local myDestroyThreshold = DistFrac * maxMassToDestroy
-			local myLoosenThreshold = DistFrac * masMassToLoosen
-
-			if DistFrac >= .85 then
-				myDestroyThreshold = myDestroyThreshold * 7
-				myLoosenThreshold = myLoosenThreshold * 7
-			end
-
-			if (prop ~= blaster) and physObj:IsValid() then
-				local mass, proceed = physObj:GetMass(), ignoreVisChecks
-
-				if not proceed then
-					local tr = util.QuickTrace(pos, propPos - pos, blaster)
-					proceed = IsValid(tr.Entity) and (tr.Entity == prop)
-				end
-
-				if proceed then
-					if mass <= myDestroyThreshold then
-						SafeRemoveEntity(prop)
-					elseif mass <= myLoosenThreshold then
-						physObj:EnableMotion(true)
-						constraint.RemoveAll(prop)
-						physObj:ApplyForceOffset((propPos - pos):GetNormalized() * 1000 * DistFrac * power * mass, propPos + VectorRand() * 10)
-					else
-						physObj:ApplyForceOffset((propPos - pos):GetNormalized() * 200 * DistFrac * origPower * mass, propPos + VectorRand() * 10)
-					end
-				end
-			end
-		end
-	end
-end
-
-function JMod.BlastDoors(blaster, pos, power, range, ignoreVisChecks)
-	for k, door in pairs(ents.FindInSphere(pos, 40 * power * (range or 1))) do
-		if JMod.IsDoor(door) and hook.Run("JMod_CanDestroyDoor", door, blaster, pos, power, range, ignoreVisChecks) ~= false then
-			local proceed = ignoreVisChecks
-
-			if not proceed then
-				local tr = util.QuickTrace(pos, door:LocalToWorld(door:OBBCenter()) - pos, blaster)
-				proceed = IsValid(tr.Entity) and (tr.Entity == door)
-			end
-
-			if proceed then
-				JMod.BlastThatDoor(door, (door:LocalToWorld(door:OBBCenter()) - pos):GetNormalized() * 1000)
-			end
-		end
-		if door:GetClass() == "func_breakable_surf" then
-			door:Fire("Break")
-		end
-	end
-end
-
-function JMod.Sploom(attacker, pos, mag, radius)
-	local Sploom = ents.Create("env_explosion")
-	Sploom:SetPos(pos)
-	Sploom:SetOwner(attacker or game.GetWorld())
-	Sploom:SetKeyValue("iMagnitude", mag or "1")
-
-	if radius then
-		Sploom:SetKeyValue("iRadiusOverride", radius)
-	end
-
-	Sploom:Spawn()
-	Sploom:Activate()
-	Sploom:Fire("explode", "", 0)
-	--[[ -- HE doesn't make fires
-	if vFireInstalled then
-		local fires=math.Round(math.random()*(mag/80))
-		for i=1, fires do
-			timer.Simple(i*0.05, function()
-				CreateVFireBall(mag/10, mag/10, pos+Vector(0,0,5), VectorRand()*math.random(mag, mag*2))
-			end)
-		end
-	end
-	]]
-end
-
 local SurfaceHardness = {
 	[MAT_METAL] = .95,
 	[MAT_COMPUTER] = .95,
@@ -928,9 +836,14 @@ function JMod.GetPackagableObject(packager, origin, dir)
 
 		"ent_aboot_jsmod_ezcrate_fulton",
 
-		"ent_jack_gmod_ezbombbay"		
+		"ent_jack_gmod_ezbombbay",
 
-		}
+		"ent_rus_spawnbase",
+
+		"build_prop"
+
+	}
+
 	local Tr = util.QuickTrace(origin or packager:GetShootPos(), (dir or packager:GetAimVector()) * 80, {packager})
 
 	local Ent = Tr.Entity
@@ -1130,7 +1043,9 @@ function JMod.EZprogressTask(ent, pos, deconstructor, task, mult)
 				return "object is already unconstrained"
 			end
 		elseif task == "salvage" then
-			if constraint.HasConstraints(ent) or not Phys:IsMotionEnabled() then
+			if ent:GetClass() == "build_prop" and (ent.Owner:GetSquadID() ~= deconstructor:GetSquadID()) then 
+				return "you cannot salvage this "
+			elseif (constraint.HasConstraints(ent) or not Phys:IsMotionEnabled()) and ent:GetClass() ~= "build_prop" then
 				return "object is constrained"
 			else
 				local Mass = (Phys:GetMass() * ent:GetPhysicsObjectCount()) ^ .8
@@ -1141,6 +1056,11 @@ function JMod.EZprogressTask(ent, pos, deconstructor, task, mult)
 					return Message
 				else
 					local AddAmt = 250 / Mass * WorkSpreadMult * JMod.Config.Tools.Toolbox.DeconstructSpeedMult
+
+					if ent:GetClass() == "build_prop" then
+						AddAmt = 250 / 50 * WorkSpreadMult * JMod.Config.Tools.Toolbox.DeconstructSpeedMult
+					end
+
 					ent:SetNW2Float("EZ"..task.."Progress", math.Clamp(Prog + AddAmt, 0, 100))
 					
 					if Prog >= 100 then

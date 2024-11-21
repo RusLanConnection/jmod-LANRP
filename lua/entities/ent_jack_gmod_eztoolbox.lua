@@ -108,7 +108,7 @@ if SERVER then
 		local slot = WepGetSlot:GetSlot()
 		WepGetSlot:Remove()
 
-		if activator:KeyDown(JMod.Config.General.AltFunctionKey) and true then
+		if activator:KeyDown(JMod.Config.General.AltFunctionKey) and activator:IsSlotEmpty(slot) then
 			activator:Give("wep_jack_gmod_eztoolbox")
 			activator:SelectWeapon("wep_jack_gmod_eztoolbox")
 

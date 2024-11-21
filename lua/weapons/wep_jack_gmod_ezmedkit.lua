@@ -527,6 +527,8 @@ function SWEP:SecondaryAttack()
 end
 
 function SWEP:OnDrop()
+	if !IsValid(self.EZdropper) or !self.EZdropper:Alive() then return end
+	
 	local Kit = ents.Create("ent_jack_gmod_ezmedkit")
 	Kit:SetPos(self:GetPos())
 	Kit:SetAngles(self:GetAngles())

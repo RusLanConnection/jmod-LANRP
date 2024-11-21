@@ -73,9 +73,12 @@ if SERVER then
 	end
 
 	function ENT:Bury(activator)
-		local Tr = util.QuickTrace(activator:GetShootPos(), activator:GetAimVector() * 100, {activator, self})
+		self:SetAngles(Angle(0,0,0))
+		local Tr = util.QuickTrace(self:GetPos(), self:GetAngles():Up() * -100, self)
 
-		if Tr.Hit and table.HasValue(self.UsableMats, Tr.MatType) and IsValid(Tr.Entity:GetPhysicsObject()) then
+		debugoverlay.Line( Tr.StartPos, Tr.HitPos, 2, Color( 255, 0, 0 ), true )
+
+		if Tr.Hit and table.HasValue(self.UsableMats, Tr.MatType) --[[and IsValid(Tr.Entity:GetPhysicsObject())]] then
 			local Ang = Tr.HitNormal:Angle()
 			Ang:RotateAroundAxis(Ang:Right(), -90)
 			local Pos = Tr.HitPos - Tr.HitNormal * 10
@@ -89,7 +92,7 @@ if SERVER then
 			Fff:SetScale(1)
 			util.Effect("eff_jack_sminebury", Fff, true, true)
 			self:EmitSound("snd_jack_pinpull.ogg")
-			activator:EmitSound("Dirt.BulletImpact")
+			self:EmitSound("Dirt.BulletImpact")
 			self.ShootDir = Tr.HitNormal
 			self:DrawShadow(false)
 			self:Arm(activator)
@@ -103,9 +106,6 @@ if SERVER then
 			if data.Speed > 25 then
 				if (self:GetState() == JMod.EZ_STATE_ARMED) and (math.random(1, 5) == 3) then
 					self:Detonate()
-				--elseif self.EZlaunchBury then
-				--	self:Bury(JMod.GetEZowner(self))
-				--	self.EZlaunchBury = false
 				else
 					self:EmitSound("Weapon.ImpactHard")
 				end
@@ -304,32 +304,6 @@ if SERVER then
 
 	function ENT:OnRemove()
 	end
---[[]
-	function ENT:GravGunPunt(ply)
-		if (self:GetState() == JMod.EZ_STATE_OFF) and IsValid(self.EZholdingPlayer) then
-			
-			self.EZlaunchBury = true
-			self.EZholdingPlayer = nil
-			--self:SetState(STATE_LAUNCHED)
-			--self:EmitSound("npc/roller/mine/rmine_predetonate.wav")
-
-			return true
-		else
-			ply:DropObject()
-		end
-	end
-
-	hook.Add("GravGunOnPickedUp", "JMOD_BOUNDINGMINE_GRAB", function(ply, ent)
-		if ent:GetClass() == "ent_jack_gmod_ezboundingmine" then 
-			local State = ent:GetState()
-			--ent.EZlastGravGunGrabTime = CurTime()
-
-			if State ~= JMod.EZ_STATE_ARMED then
-				JMod.SetEZowner(ent, ply)
-				ent.EZholdingPlayer = ply
-			end
-		end
-	end)--]]
 
 elseif CLIENT then
 	function ENT:Initialize()

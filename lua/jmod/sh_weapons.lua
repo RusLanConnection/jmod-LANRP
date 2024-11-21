@@ -403,7 +403,7 @@ JMod.AmmoTable = {
 	},
 	["Black Powder Paper Cartridge"] = {
 		sizemult = 7,
-		carrylimit = 100,
+		carrylimit = 15,
 		basedmg = 95,
 		effrange = 512,
 		terminaldmg = 30,

@@ -14,10 +14,10 @@ ENT.EZRackAngles = Angle(0, 90, 0)
 ENT.EZbombBaySize = 5
 ENT.EZguidable = false
 ---
-ENT.Model = "models/props_phx/ww2bomb.mdl"
-ENT.Material = "models/entities/mat_jack_clusterbomb"
+ENT.Model = "models/hunter/blocks/cube025x125x025.mdl"
+--ENT.Model = "models/props_phx/ww2bomb.mdl"
 ENT.Mass = 100
-ENT.DetSpeed = 1000
+ENT.DetSpeed = 500
 ENT.DetType = "airburst"
 
 local STATE_BROKEN, STATE_OFF, STATE_ARMED = -1, 0, 1
@@ -73,22 +73,63 @@ if SERVER then
 			self.FreefallTicks = 0
 		end
 
-		JMod.AeroDrag(self, self:GetForward())
+		JMod.AeroDrag(self, self:GetRight(), 2)
 		self:NextThink(CurTime() + .1)
 
 		return true
 	end
 elseif CLIENT then
 	function ENT:Initialize()
+		self.Mdl = ClientsideModel("models/props_phx/ww2bomb.mdl")
+		self.Mdl:SetSubMaterial(0, "models/entities/mat_jack_clusterbomb")
+		self.Mdl:SetModelScale(1, 0)
+		self.Mdl:SetPos(self:GetPos())
+		self.Mdl:SetParent(self)
+		self.Mdl:SetNoDraw(true)
+		--self.Guided=false
+
+		self.snd = CreateSound(self, self.WhistleSound)
+		self.snd:SetSoundLevel( 110 )
+		self.snd:PlayEx(0,150)
 	end
 
-	--
-	function ENT:Think()
+	function ENT:CalcDoppler()
+		local Ent = LocalPlayer()
+		local ViewEnt = Ent:GetViewEntity()
+
+		local sVel = self:GetVelocity()
+		local oVel = Ent:GetVelocity()
+		local SubVel = oVel - sVel
+		local SubPos = self:GetPos() - Ent:GetPos()
+	
+		local DirPos = SubPos:GetNormalized()
+		local DirVel = SubVel:GetNormalized()
+		local A = math.acos( math.Clamp( DirVel:Dot( DirPos ) ,-1,1) )
+		return 1 + math.cos( A ) * SubVel:Length() / 13503.9
 	end
 
 	--
 	function ENT:Draw()
-		self:DrawModel()
+		local Pos, Ang = self:GetPos(), self:GetAngles()
+		Ang:RotateAroundAxis(Ang:Up(), -90)
+		--self:DrawModel()
+		self.Mdl:SetRenderOrigin(Pos + Ang:Right() * 6 + Ang:Forward() * 17)
+		self.Mdl:SetRenderAngles(Ang)
+		self.Mdl:DrawModel()
+	end
+
+	--
+	function ENT:Think()
+		if self.snd then
+			self.snd:ChangePitch( 100 * self:CalcDoppler(), 1 )
+			self.snd:ChangeVolume(math.Clamp((self:GetVelocity():LengthSqr() - 150000) / 5000,0,1), 2)
+		end
+	end
+
+	function ENT:OnRemove()
+		if self.snd then
+			self.snd:Stop()
+		end
 	end
 
 	language.Add("ent_jack_gmod_ezclusterbomb", "EZ Cluster Bomb")

@@ -230,6 +230,8 @@ end
 
 --
 function SWEP:OnDrop()
+	if !IsValid(self.EZdropper) or !self.EZdropper:Alive() then return end
+	
 	local Bucket = ents.Create("ent_jack_gmod_ezbucket")
 	Bucket:SetPos(self:GetPos())
 	Bucket:SetAngles(self:GetAngles())

@@ -92,12 +92,12 @@ JMod.BodyPartDamageMults = {
 	[HITGROUP_HEAD] = 2,
 	[HITGROUP_CHEST] = 1,
 	[HITGROUP_GENERIC] = 1,
-	[HITGROUP_STOMACH] = .8,
+	[HITGROUP_STOMACH] = 1.1,
 	[HITGROUP_GEAR] = .8,
-	[HITGROUP_LEFTARM] = .4,
-	[HITGROUP_RIGHTARM] = .4,
-	[HITGROUP_LEFTLEG] = .4,
-	[HITGROUP_RIGHTLEG] = .4
+	[HITGROUP_LEFTARM] = .9,
+	[HITGROUP_RIGHTARM] = .9,
+	[HITGROUP_LEFTLEG] = .9,
+	[HITGROUP_RIGHTLEG] = .9
 }
 
 local BasicArmorProtectionProfile = {
@@ -361,7 +361,7 @@ JMod.ArmorTable = {
 		dur = 200,
 		ent = "ent_jack_gmod_ezarmor_nazihead"
 	},
-	["Brodie-helmet"] = {
+	--[[["Brodie-helmet"] = {
 		PrintName = "Brodie-helmet",
 		mdl = "models/codww2/gear/allies/brodie_helmet.mdl", -- tarkov
 		slots = {
@@ -375,7 +375,7 @@ JMod.ArmorTable = {
 		wgt = 10,
 		dur = 200,
 		ent = "ent_jack_gmod_ezarmor_brodiehead"
-	},
+	},]]
 	["schirmmuetze"] = {
 		PrintName = "schirmmuetze",
 		mdl = "models/codww2/german/schirmmuetze.mdl", -- tarkov

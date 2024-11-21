@@ -23,7 +23,7 @@ SWEP.BodyHolsterScale = .8
 JMod.ApplyAmmoSpecs(SWEP, "Medium Rifle Round")
 SWEP.Primary.ClipSize = 100 -- DefaultClip is automatically set.
 SWEP.ChamberSize = 0 -- open-bolt firearm lol
-SWEP.Recoil = .7 -- hevy gun
+SWEP.Recoil = .3 -- hevy gun
 SWEP.Delay = 60 / 550 -- 60/RPM.
 
 SWEP.Firemodes = {

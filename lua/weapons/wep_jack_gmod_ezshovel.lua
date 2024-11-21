@@ -40,7 +40,7 @@ SWEP.WElements = {
 
 --
 SWEP.DropEnt = "ent_jack_gmod_ezshovel"
-SWEP.HitDistance		= 64
+SWEP.HitDistance		= 70
 SWEP.HitInclination		= 0.4
 SWEP.HitPushback		= 500
 SWEP.MaxSwingAngle		= 120

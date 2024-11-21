@@ -16,7 +16,7 @@ ENT.Color = Color(255, 237, 197)
 ENT.ModelScale = 1
 ENT.Mass = 100
 ENT.ImpactNoise1 = "Dirt.Impact"
-ENT.DamageThreshold = 100
+ENT.DamageThreshold = 70
 ENT.BreakNoise = "Dirt.ImpactHard"
 
 if SERVER then
@@ -29,12 +29,16 @@ if SERVER then
 	function ENT:OnTakeDamage(dmginfo)
 		local DmgAmt, ResourceAmt = dmginfo:GetDamage(), self:GetResource()
 		local DmgVec = dmginfo:GetDamageForce()
-		dmginfo:SetDamageForce(DmgVec / (ResourceAmt^2))
+		--dmginfo:SetDamageForce(DmgVec / (ResourceAmt^2))
 		self:TakePhysicsDamage(dmginfo)
 		--self:SetEZsupplies(self.EZsupplies, math.Clamp(ResourceAmt - DmgAmt / 100, 0, 100))
 
-		if dmginfo:GetDamage() >= self.DamageThreshold then
+		if dmginfo:GetDamage() >= self.DamageThreshold and dmginfo:IsExplosionDamage() then
 			self:GetSchmovin()
+
+			local PhysObj = self:GetPhysicsObject()
+
+			PhysObj:ApplyForceOffset( Vector(0,0,500), dmginfo:GetDamagePosition() )
 		end
 
 		if dmginfo:GetDamage() >= (self.DamageThreshold * 3)then

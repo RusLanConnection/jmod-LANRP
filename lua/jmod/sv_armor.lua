@@ -72,7 +72,7 @@ function JMod.EZarmorSync(ply)
 		ply:SetNW2Bool("EZparachuting", false)
 	end
 
-	hook.Run("JMod_EZarmorSync", ply)
+	hook.Run("JModHookEZArmorSync", ply)
 
 	net.Start("JMod_EZarmorSync")
 		net.WriteEntity(ply)
@@ -194,7 +194,20 @@ local function GetProtectionFromSlot(ply, slot, dmg, dmgAmt, protectionMul, shou
 end
 
 function LocationalDmgHandling(ply, hitgroup, dmg)
+	local BodyPartDamageMults = {
+		[HITGROUP_HEAD] = 2,
+		[HITGROUP_CHEST] = 1,
+		[HITGROUP_GENERIC] = 1,
+		[HITGROUP_STOMACH] = 1.1,
+		[HITGROUP_GEAR] = .8,
+		[HITGROUP_LEFTARM] = .8,
+		[HITGROUP_RIGHTARM] = .8,
+		[HITGROUP_LEFTLEG] = .8,
+		[HITGROUP_RIGHTLEG] = .8
+	}
+	
 	local Mul = 1
+
 	local AmmoTypeID, AmmoAPmul, AmmoHPmul = dmg:GetAmmoType(), 1, 1
 
 	if AmmoTypeID then
@@ -261,7 +274,7 @@ function LocationalDmgHandling(ply, hitgroup, dmg)
 			Protection = Protection * AmmoAPmul
 
 			if AmmoAPmul < 1 and JMod.Config.QoL.RealisticLocationalDamage then
-				Mul = Mul * JMod.BodyPartDamageMults[hitgroup] ^ (.6 + (1 - AmmoAPmul))
+				Mul = Mul * BodyPartDamageMults[hitgroup] ^ (.6 + (1 - AmmoAPmul))
 			end
 		end
 
@@ -270,7 +283,7 @@ function LocationalDmgHandling(ply, hitgroup, dmg)
 		-- if there's no armor on the struck bodypart
 		if NoProtection then 
 			if JMod.Config.QoL.RealisticLocationalDamage then
-				Mul = Mul * JMod.BodyPartDamageMults[hitgroup]
+				Mul = Mul * BodyPartDamageMults[hitgroup]
 			end
 		else
 			sound.Play("snds_jack_gmod/ricochet_"..math.random(1,2)..".ogg", ply:GetShootPos() + VectorRand() * 10, 70, math.random(80,120))
@@ -281,7 +294,7 @@ function LocationalDmgHandling(ply, hitgroup, dmg)
 			JMod.EZarmorSync(ply)
 		end
 	elseif JMod.Config.QoL.RealisticLocationalDamage then
-		Mul = Mul * (JMod.BodyPartDamageMults[hitgroup] or 1) * AmmoHPmul
+		Mul = Mul * (BodyPartDamageMults[hitgroup] or 1) * AmmoHPmul
 	else
 		Mul = Mul * AmmoHPmul
 	end
@@ -324,8 +337,6 @@ local function FullBodyDmgHandling(ply, dmg, biological, isInSewage)
 
 	Mul = (Mul * 1 - (Protection * JMod.Config.Armor.ProtectionMult))
 
-	print(dmg:GetDamage(),Mul)
-
 	if Mul < .001 then
 		dmg:ScaleDamage(0)
 	else
@@ -347,7 +358,6 @@ end
 hook.Add("ScalePlayerDamage", "JMod_ScalePlayerDamage", function(ply, hitgroup, dmginfo)
 	if ply.EZarmor then
 		LocationalDmgHandling(ply, hitgroup, dmginfo)
-		print(dmginfo:GetDamage())
 	end
 end)
 
@@ -371,10 +381,10 @@ hook.Add("EntityTakeDamage", "JMod_EntityTakeDamage", function(victim, dmginfo)
 				FullBodyDmgHandling(victim, dmginfo, true, IsInSewage)
 			end
 
-			print(dmginfo:GetDamage())
+			--print(dmginfo:GetDamage())
 			
 
-			if JMod.Config.QoL.BleedDmgMult > 0 and IsPiercingDmg then
+			--[[if JMod.Config.QoL.BleedDmgMult > 0 and IsPiercingDmg then
 				timer.Simple(0, function()
 					local NewHelf = victim:Health()
 					local HelfLoss = Helf - NewHelf
@@ -385,7 +395,7 @@ hook.Add("EntityTakeDamage", "JMod_EntityTakeDamage", function(victim, dmginfo)
 						JMod.SyncBleeding(victim)
 					end
 				end)
-			end
+			end]]
 		end
 	end
 end)
@@ -464,7 +474,7 @@ function JMod.RemoveArmorByID(ply, ID, broken)
 	local Ent -- This is for if we can stow stuff in the armor when it's unequpped
 
 	if broken then
-		hook.Run("JMod_ArmorRemoved", ply, Info, Specs)
+		hook.Run("JModHookArmorRemoved", ply, Info, Specs)
 
 		if Specs.eff and Specs.eff.explosive then
 			local FireAmt = (Info.chrg and Info.chrg.fuel and math.random(2, 4)) or 0

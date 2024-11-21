@@ -9,7 +9,7 @@ ENT.Spawnable = true
 ENT.AdminSpawnable = true
 ---
 ENT.JModPreferredCarryAngles = Angle(90, 0, 0)
-ENT.ThrustPower = 50000
+ENT.ThrustPower = 40000
 ENT.JModHighlyFlammableFunc = "Launch"
 ENT.JModEZstorable = true
 ---

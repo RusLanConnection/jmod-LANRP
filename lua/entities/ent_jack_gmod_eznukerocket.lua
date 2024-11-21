@@ -82,8 +82,12 @@ if SERVER then
 				self:EmitSound("Canister.ImpactHard")
 			end
 
-			local DetSpd=300
-			if((data.Speed>DetSpd)and(self:GetState()==STATE_LAUNCHED))then
+			if (self:GetState() == STATE_LAUNCHED) and data.HitEntity:GetClass() == "lvs_missile" then
+				self:Break()
+			end
+
+			local DetSpd = 300
+			if (data.Speed > DetSpd) and (self:GetState() == STATE_LAUNCHED) then
 				self:Detonate()
 				return
 			end
@@ -103,13 +107,13 @@ if SERVER then
 			JMod.DamageSpark(self)
 		end
 
-		for k = 1, 10 * JMod.Config.Particles.NuclearRadiationMult do
+		for k = 1, 10 do
 			local Gas = ents.Create("ent_jack_gmod_ezfalloutparticle")
 			Gas:SetPos(self:GetPos())
 			JMod.SetEZowner(Gas, JMod.GetEZowner(self))
 			Gas:Spawn()
 			Gas:Activate()
-			Gas.CurVel = (VectorRand() * math.random(1, 50) + Vector(0, 0, 10 * JMod.Config.Particles.NuclearRadiationMult))
+			Gas.CurVel = VectorRand() * math.random(-100, 100)
 		end
 
 		SafeRemoveEntityDelayed(self, 10)
@@ -124,12 +128,12 @@ if SERVER then
 		self:TakePhysicsDamage(dmginfo)
 
 		if JMod.LinCh(dmginfo:GetDamage(), 60, 120) then
-			if math.random(1, 3) == 1 then
+			--if math.random(1, 3) == 1 then
 				self:Break()
-			else
-				JMod.SetEZowner(self, dmginfo:GetAttacker())
-				self:Detonate()
-			end
+			--else
+			--	JMod.SetEZowner(self, dmginfo:GetAttacker())
+			--	self:Detonate()
+			--end
 		end
 	end
 
@@ -174,11 +178,11 @@ if SERVER then
 	function ENT:Detonate()
 		if self.Exploded then return end
 		self.Exploded = true
-		local SelfPos, Att, Power, Range = self:GetPos() + Vector(0, 0, 100), JMod.GetEZowner(self), JMod.Config.Explosives.Nuke.PowerMult, JMod.Config.Explosives.Nuke.RangeMult
+		local SelfPos, Att, Power, Range = self:GetPos() + Vector(0, 0, 100), JMod.GetEZowner(self), JMod.Config.Explosives.Nuke.PowerMult, 1
 
 		--JMod.Sploom(Att,SelfPos,500)
 		timer.Simple(.1, function()
-			JMod.BlastDamageIgnoreWorld(SelfPos, Att, nil, 1200 * Power, 3000 * Range)
+			JMod.BlastDamageIgnoreWorld(SelfPos, Att, nil, 1200, 6000)
 		end)
 
 		---
@@ -205,14 +209,14 @@ if SERVER then
 		end
 
 		---
-		for h = 1, 50 do
+		for h = 1, 30 do
 			timer.Simple(h / 10, function()
 				local ThermalRadiation = DamageInfo()
 				ThermalRadiation:SetDamageType(DMG_BURN)
 				ThermalRadiation:SetDamage((50 / h) * Power)
 				ThermalRadiation:SetAttacker(Att)
 				ThermalRadiation:SetInflictor(game.GetWorld())
-				util.BlastDamageInfo(ThermalRadiation, SelfPos, 20000 * Range)
+				util.BlastDamageInfo(ThermalRadiation, SelfPos, 5000)
 			end)
 		end
 
@@ -231,7 +235,7 @@ if SERVER then
 		---
 		for i = 1, 20 do
 			timer.Simple(i / 4, function()
-				SelfPos = SelfPos + Vector(0, 0, 100)
+				SelfPos = SelfPos + Vector(0, 0, 512)
 				---
 				local powa, renj = 10 + i * 2.5 * Power, 1 + i / 10 * Range
 
@@ -247,7 +251,7 @@ if SERVER then
 				end
 
 				---
-				util.BlastDamage(game.GetWorld(), Att, SelfPos, 1600 * i * Range, 300 / i * Power)
+				util.BlastDamage(game.GetWorld(), Att, SelfPos, 2700 * i, 500 / i + 1)
 
 				---
 				JMod.WreckBuildings(nil, SelfPos, powa, renj, i < 3)
@@ -264,13 +268,13 @@ if SERVER then
 				if i == 20 then
 					for j = 1, 10 do
 						timer.Simple(j / 10, function()
-							for k = 1, 20 * JMod.Config.Particles.NuclearRadiationMult do
+							for k = 1, 20 do
 								local Gas = ents.Create("ent_jack_gmod_ezfalloutparticle")
-								Gas:SetPos(SelfPos + Vector(math.random(-500, 500), math.random(-500, 500), math.random(0, 100)))
+								Gas:SetPos(SelfPos + Vector(math.random(-500, 500), math.random(-500, 500), math.random(-400, 0)))
 								JMod.SetEZowner(Gas, Att)
 								Gas:Spawn()
 								Gas:Activate()
-								Gas.CurVel = (Vector(math.random(-500, 500), math.random(-500, 500), math.random(800, 1200)) * JMod.Config.Particles.NuclearRadiationMult)
+								Gas.CurVel = (Vector(math.random(-500, 500), math.random(-500, 500), math.random(-100, 0)))
 							end
 						end)
 					end
@@ -286,20 +290,6 @@ if SERVER then
 		end)
 
 		---
-		timer.Simple(5, function()
-			for j = 1, 5 do
-				timer.Simple(j / 5, function()
-					for k = 1, 5 * JMod.Config.Particles.NuclearRadiationMult do
-						local Gas = ents.Create("ent_jack_gmod_ezfalloutparticle")
-						Gas:SetPos(SelfPos)
-						JMod.SetEZowner(Gas, Att)
-						Gas:Spawn()
-						Gas:Activate()
-						Gas.CurVel = (VectorRand() * math.random(1, 250) + Vector(0, 0, 500 * JMod.Config.Particles.NuclearRadiationMult))
-					end
-				end)
-			end
-		end)
 	end
 
 	function ENT:OnRemove()

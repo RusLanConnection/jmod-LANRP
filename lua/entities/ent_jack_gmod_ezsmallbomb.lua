@@ -56,7 +56,7 @@ if SERVER then
 		---
 		util.BlastDamage(game.GetWorld(), Att, SelfPos + Vector(0, 0, 300), 300, 80)
 
-		timer.Simple(.25, function()
+		timer.Simple(.5, function()
 			util.BlastDamage(game.GetWorld(), Att, SelfPos, 600, 80)
 		end)
 
@@ -128,6 +128,26 @@ elseif CLIENT then
 		self.Mdl:SetParent(self)
 		self.Mdl:SetNoDraw(true)
 		self.Snakeye = false
+		self.Mdl:SetNoDraw(true)
+
+		self.snd = CreateSound(self, self.WhistleSound)
+		self.snd:SetSoundLevel( 110 )
+		self.snd:PlayEx(0,150)
+	end
+
+	function ENT:CalcDoppler()
+		local Ent = LocalPlayer()
+		local ViewEnt = Ent:GetViewEntity()
+
+		local sVel = self:GetVelocity()
+		local oVel = Ent:GetVelocity()
+		local SubVel = oVel - sVel
+		local SubPos = self:GetPos() - Ent:GetPos()
+	
+		local DirPos = SubPos:GetNormalized()
+		local DirVel = SubVel:GetNormalized()
+		local A = math.acos( math.Clamp( DirVel:Dot( DirPos ) ,-1,1) )
+		return 1 + math.cos( A ) * SubVel:Length() / 13503.9
 	end
 
 	function ENT:Think()
@@ -144,6 +164,17 @@ elseif CLIENT then
 		self.Mdl:SetRenderOrigin(Pos + Ang:Up() * 6 - Ang:Right() * 6 - Ang:Forward() * 20)
 		self.Mdl:SetRenderAngles(Ang)
 		self.Mdl:DrawModel()
+
+		if self.snd then
+			self.snd:ChangePitch( 100 * self:CalcDoppler(), 1 )
+			self.snd:ChangeVolume(math.Clamp((self:GetVelocity():LengthSqr() - 150000) / 5000,0,1), 2)
+		end
+	end
+
+	function ENT:OnRemove()
+		if self.snd then
+			self.snd:Stop()
+		end
 	end
 
 	language.Add("ent_jack_gmod_ezsmallbomb", "EZ Small Bomb")

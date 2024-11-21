@@ -304,13 +304,13 @@ if(SERVER)then
 
 				self:HealEffect("hl1/ambience/steamburst1.ogg", true)
 				self.Patient:PrintMessage(HUD_PRINTCENTER, "decontaminating")
-			elseif self.Patient.EZpoison then
-				self.Patient.EZpoison = math.Clamp(self.Patient.EZpoison - self.HealEfficiency * JMod.Config.Machines.MedBay.HealMult * 5, 0, 9e9)
+			elseif (self.Patient.EZpoison != nil) and self.Patient.EZpoison > 0 then
+				self.Patient.EZpoison = math.max(self.Patient.EZpoison - self.HealEfficiency * JMod.Config.Machines.MedBay.HealMult * 5, 0)
 				self:HealEffect("hl1/ambience/steamburst1.ogg", true)
 				self.Patient:PrintMessage(HUD_PRINTCENTER, "curing poisoning")
 			else
 				if Infection > 1 then
-					self.Patient.EZvirus.Severity = math.Clamp(Infection - self.HealEfficiency * JMod.Config.Machines.MedBay.HealMult * 3, 1, 9e9)
+					self.Patient.EZvirus.Severity = math.max(Infection - self.HealEfficiency * JMod.Config.Machines.MedBay.HealMult * 3, 1)
 					self.Patient:PrintMessage(HUD_PRINTCENTER, "boosting immune system")
 				else
 					self.Patient:PrintMessage(HUD_PRINTCENTER, "repairing damage")

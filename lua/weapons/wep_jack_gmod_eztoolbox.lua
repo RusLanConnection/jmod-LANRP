@@ -37,36 +37,6 @@ SWEP.MaxElectricity = 200
 SWEP.MaxGas = 200
 ]]
 
-SWEP.VElements = {
-	--[[["wrench"] = {
-		type = "Model",
-		model = "models/props_c17/tools_wrench01a.mdl",
-		bone = "ValveBiped.Bip01_R_Hand",
-		rel = "",
-		pos = Vector(3.5, 1.5, 0),
-		angle = Angle(0, 90, -90),
-		size = Vector(1, 1, 1),
-		color = Color(255, 255, 255, 255),
-		surpresslightning = false,
-		material = "",
-		skin = 0,
-		bodygroup = {}
-	},
-	["pliers"] = {
-		type = "Model",
-		model = "models/props_c17/tools_pliers01a.mdl",
-		bone = "ValveBiped.Bip01_L_Hand",
-		rel = "",
-		pos = Vector(2.8, 2.4, -2.5),
-		angle = Angle(0, 180, 90),
-		size = Vector(1, 1, 1),
-		color = Color(255, 255, 255, 255),
-		surpresslightning = false,
-		material = "",
-		skin = 0,
-		bodygroup = {}
-	}--]]
-}
 
 SWEP.WElements = {
 	["saw"] = {
@@ -83,34 +53,7 @@ SWEP.WElements = {
 		skin = 0,
 		bodygroup = {}
 	},
-	--[[["wrench"] = {
-		type = "Model",
-		model = "models/props_c17/tools_wrench01a.mdl",
-		bone = "ValveBiped.Bip01_R_Hand",
-		rel = "",
-		pos = Vector(2.596, 1, 3.635),
-		angle = Angle(0, -90, -90),
-		size = Vector(1, 1, 1),
-		color = Color(255, 255, 255, 255),
-		surpresslightning = false,
-		material = "",
-		skin = 0,
-		bodygroup = {}
-	},
-	["pliers"] = {
-		type = "Model",
-		model = "models/props_c17/tools_pliers01a.mdl",
-		bone = "ValveBiped.Bip01_L_Hand",
-		rel = "",
-		pos = Vector(4.675, 0, -1.558),
-		angle = Angle(0, 0, 90),
-		size = Vector(1, 1, 1),
-		color = Color(255, 255, 255, 255),
-		surpresslightning = false,
-		material = "",
-		skin = 0,
-		bodygroup = {}
-	},--]]
+
 	["torch"] = {
 		type = "Model",
 		model = "models/props_silo/welding_torch.mdl",
@@ -125,20 +68,7 @@ SWEP.WElements = {
 		skin = 0,
 		bodygroup = {}
 	},
-	--[[["pickaxe"] = {
-		type = "Model",
-		model = "models/props_mining/pickaxe01.mdl",
-		bone = "ValveBiped.Bip01_Spine4",
-		rel = "",
-		pos = Vector(-22.338, 2.596, -1.558),
-		angle = Angle(-92.338, 0, 0),
-		size = Vector(0.75, 0.75, 0.75),
-		color = Color(255, 255, 255, 255),
-		surpresslightning = false,
-		material = "",
-		skin = 0,
-		bodygroup = {}
-	},--]]
+
 	["mask"] = {
 		type = "Model",
 		model = "models/props_silo/welding_helmet.mdl",
@@ -153,20 +83,7 @@ SWEP.WElements = {
 		skin = 0,
 		bodygroup = {}
 	},
-	--[[["axe"] = {
-		type = "Model",
-		model = "models/props_forest/axe.mdl",
-		bone = "ValveBiped.Bip01_Spine4",
-		rel = "",
-		pos = Vector(-7.792, 2, 4),
-		angle = Angle(118.052, 87.662, 180),
-		size = Vector(1, 1, 1),
-		color = Color(255, 255, 255, 255),
-		surpresslightning = false,
-		material = "",
-		skin = 0,
-		bodygroup = {}
-	},--]]
+
 	["toolbox"] = {
 		type = "Model",
 		model = "models/weapons/w_models/w_tooljox.mdl",
@@ -228,6 +145,9 @@ function SWEP:Initialize()
 	self.ModifcationCost = 20
 
 	if SERVER then
+
+		
+
 		self.Craftables = {}
 
 		for name, info in pairs(JMod.Config.Craftables) do
@@ -240,6 +160,10 @@ function SWEP:Initialize()
 			end
 		end
 	end
+end
+
+function SWEP:Equip(ply)
+	self:GetOwner():Give("builder")
 end
 
 function SWEP:PreDrawViewModel(vm, wep, ply)
@@ -288,13 +212,13 @@ function SWEP:GetEZsupplies(resourceType, getter)
 		[JMod.EZ_RESOURCE_TYPES.GAS] = 200
 	}
 	if resourceType then
-		if AvailableResources[resourceType] and AvailableResources[resourceType] > 0 then
-			return AvailableResources[resourceType]
+		if AvaliableResources[resourceType] and AvaliableResources[resourceType] > 0 then
+			return AvaliableResources[resourceType]
 		else
 			return nil
 		end
 	else
-		return AvailableResources
+		return AvaliableResources
 	end
 end
 
@@ -512,9 +436,7 @@ function SWEP:ModifyMachine(ent, tbl, ammoType)
 		self:Msg("device must be turned off to modify")
 	elseif JMod.HaveResourcesToPerformTask(self:GetOwner():GetShootPos(), 150, { [JMod.EZ_RESOURCE_TYPES.BASICPARTS] = self.ModifcationCost }, self) then
 		local ChangedSomething = false
-		if (ent.GetAmmoType and (ammoType ~= ent:GetAmmoType())) then
-			ChangedSomething = true
-		elseif (ent.GetLiquidType and (ammoType ~= ent:GetLiquidType())) then
+		if (ent.GetAmmoType and (ammoType ~= ent:GetAmmoType())) or (ent.GetLiquidType and (ammoType ~= ent:GetLiquidType())) then
 			ChangedSomething = true
 		else
 			for k, v in pairs(tbl) do
@@ -524,15 +446,13 @@ function SWEP:ModifyMachine(ent, tbl, ammoType)
 			end
 		end
 		if ChangedSomething then
-			local SuccessfulConsume = JMod.ConsumeResourcesInRange({
+			JMod.ConsumeResourcesInRange({
 				[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = self.ModifcationCost
-			}, self.Owner:GetShootPos(), nil, self)
-			
-			if SuccessfulConsume then
-				ent:SetMods(tbl, ammoType)
-				self:UpgradeEffect(ent:GetPos() + Vector(0, 0, 30), 2)
-			end
+			}, nil, nil, self)
+			self:UpgradeEffect(ent:GetPos() + Vector(0, 0, 30), 2)
 		end
+
+		ent:SetMods(tbl, ammoType)
 	else
 		self:Msg("needs " .. tostring(self.ModifcationCost) .. " Basic Parts nearby to perform modification")
 	end
@@ -698,6 +618,8 @@ end
 
 --
 function SWEP:OnDrop()
+	if !IsValid(self.EZdropper) or !self.EZdropper:Alive() then return end
+	
 	local Kit = ents.Create("ent_jack_gmod_eztoolbox")
 	Kit:SetPos(self:GetPos())
 	Kit:SetAngles(self:GetAngles())
@@ -709,6 +631,8 @@ function SWEP:OnDrop()
 	if Phys then
 		Phys:SetVelocity(self:GetVelocity() / 2)
 	end
+
+	self.EZdropper:StripWeapon("builder")
 
 	self:Remove()
 end
@@ -726,15 +650,6 @@ function SWEP:OnRemove()
 
 	-- ADDED :
 	if CLIENT then
-		-- Removes V Models
-		for k, v in pairs(self.VElements) do
-			local model = v.modelEnt
-
-			if v.type == "Model" and IsValid(model) then
-				model:Remove()
-			end
-		end
-
 		-- Removes W Models
 		for k, v in pairs(self.WElements) do
 			local model = v.modelEnt

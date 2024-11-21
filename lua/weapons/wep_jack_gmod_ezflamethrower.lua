@@ -78,8 +78,8 @@ function SWEP:ViewModelDrawn()
 	self:SCKViewModelDrawn()
 	if (self:GetState() == STATE_FLAMIN) then
 		render.SetMaterial(GlowSprite)
-		local Dir = self.Owner:GetAimVector()
-		local Pos = self.Owner:GetShootPos() + self.Owner:GetRight() * 18 - self.Owner:GetUp() * 18
+		local Dir = self:GetOwner():GetAimVector()
+		local Pos = self:GetOwner():GetShootPos() + self:GetOwner():GetRight() * 18 - self:GetOwner():GetUp() * 18
 		for i = 1, 10 do
 			local Inv = 10 - i
 			render.DrawSprite(Pos + Dir * (i * 20 + math.random(100, 130)), 4 * Inv, 4 * Inv, Color(255, 150, 100, 255))
@@ -102,8 +102,8 @@ function SWEP:DrawWorldModel()
 	self:SCKDrawWorldModel()
 	if (self:GetState() == STATE_FLAMIN) then
 		render.SetMaterial(GlowSprite)
-		local Dir = self.Owner:GetAimVector()
-		--local Pos = self.Owner:GetShootPos() + self.Owner:GetRight() * 10 - self.Owner:GetUp() * 17 - Dir * 60
+		local Dir = self:GetOwner():GetAimVector()
+		--local Pos = self:GetOwner():GetShootPos() + self:GetOwner():GetRight() * 10 - self:GetOwner():GetUp() * 17 - Dir * 60
 		local Pos = self:GetAttachment(1).Pos
 		for i = 1, 20 do
 			local Inv = 20 - i
@@ -129,7 +129,7 @@ local Backness = 0
 function SWEP:GetViewModelPosition(pos, ang)
 	local FT = FrameTime()
 
-	if IsValid(self.Owner) and ((self.Owner:KeyDown(IN_SPEED)) or (self.Owner:KeyDown(IN_ZOOM))) then
+	if IsValid(self:GetOwner()) and ((self:GetOwner():KeyDown(IN_SPEED)) or (self:GetOwner():KeyDown(IN_ZOOM))) then
 		Downness = Lerp(FT * 2, Downness, 10)
 	else
 		Downness = Lerp(FT * 2, Downness, 0)
@@ -157,8 +157,8 @@ function SWEP:SetupDataTables()
 end
 
 function SWEP:UpdateNextIdle()
-	if not(self.Owner:IsPlayer()) then return end
-	local vm = self.Owner:GetViewModel()
+	if not(self:GetOwner():IsPlayer()) then return end
+	local vm = self:GetOwner():GetViewModel()
 	self.NextIdle = CurTime() + vm:SequenceDuration()
 end
 
@@ -184,8 +184,8 @@ function SWEP:SetEZsupplies(typ, amt, setter)
 	if ResourceSetMethod then
 		ResourceSetMethod(self, amt)
 	end
-	if self.EZarmorID and self.Owner.EZarmor and self.Owner.EZarmor.items[self.EZarmorID] then
-		local ArmorItem = self.Owner.EZarmor.items[self.EZarmorID]
+	if self.EZarmorID and self:GetOwner().EZarmor and self:GetOwner().EZarmor.items[self.EZarmorID] then
+		local ArmorItem = self:GetOwner().EZarmor.items[self.EZarmorID]
 		if ArmorItem.chrg and ArmorItem.chrg[typ] then
 			ArmorItem.chrg[typ] = amt
 		end
@@ -198,7 +198,7 @@ function SWEP:Cease()
 end
 
 function SWEP:GetNozzle()
-	local Owner = self.Owner
+	local Owner = self:GetOwner()
 	local AimVec = Owner:GetAimVector()
 	local ShootPos = Owner:GetShootPos()
 	local FirePos, FireAng
@@ -262,7 +262,7 @@ function SWEP:PrimaryAttack()
 				if self.NextSparkTime < Time then
 					self.NextSparkTime = Time + 0.1
 					local Splach = EffectData()
-					local SplachTr = util.QuickTrace(FirePos + FireRight * 2 + FireUp * 2, FireForward * 50, self.Owner)
+					local SplachTr = util.QuickTrace(FirePos + FireRight * 2 + FireUp * 2, FireForward * 50, self:GetOwner())
 					Splach:SetOrigin(SplachTr.HitPos + SplachTr.HitNormal * 20 + FireRight * 5 - FireUp * 10)
 					Splach:SetStart(FireForward * 2)
 					Splach:SetScale(1)
@@ -276,7 +276,7 @@ function SWEP:PrimaryAttack()
 				self.SoundLoop:SetSoundLevel(75)
 				self.SoundLoop:Play()
 			elseif (State == STATE_FLAMIN) then
-				self.Owner:MuzzleFlash()
+				self:GetOwner():MuzzleFlash()
 				local Foof = EffectData()
 				Foof:SetNormal(FireAng:Forward())
 				Foof:SetScale(2)
@@ -289,8 +289,8 @@ function SWEP:PrimaryAttack()
 
 			if ((State == STATE_FLAMIN) or (State == STATE_SPRAYIN)) then
 				self:Pawnch()
-				self.Owner:ViewPunch(AngleRand() * .002)
-				local FlameTr = util.QuickTrace(FirePos, FireAng:Forward() * 200, self.Owner)
+				self:GetOwner():ViewPunch(AngleRand() * .002)
+				local FlameTr = util.QuickTrace(FirePos, FireAng:Forward() * 200, self:GetOwner())
 				FirePos = FlameTr.HitPos
 				local Flame = ents.Create("ent_jack_gmod_eznapalm")
 				Flame:SetPos(FirePos)
@@ -299,10 +299,10 @@ function SWEP:PrimaryAttack()
 				Flame:SetOwner(JMod.GetEZowner(self))
 				Flame.HighVisuals = (math.random(1, 2) == 1)
 				Flame.SpeedMul = math.Rand(.9, 1.1)
-				Flame.Creator = self.Owner
+				Flame.Creator = self:GetOwner()
 				Flame.Burnin = (State == STATE_FLAMIN)
 				Flame.LifeTime = math.random(1, 1.5)
-				JMod.SetEZowner(Flame, self.Owner)
+				JMod.SetEZowner(Flame, self:GetOwner())
 				Flame:Spawn()
 				Flame:Activate()
 				local DrainMult = JMod.Config.Weapons.FlamethrowerFuelDrainMult or 1
@@ -318,7 +318,7 @@ function SWEP:SecondaryAttack()
 	local Time = CurTime()
 	local NextAttackTime = .05
 	self:SetNextSecondaryFire(CurTime() + NextAttackTime)
-	if self.Owner:IsPlayer() and (self.Owner:IsSprinting() or self.Owner:KeyDown(IN_ZOOM)) then return end
+	if self:GetOwner():IsPlayer() and (self:GetOwner():IsSprinting() or self:GetOwner():KeyDown(IN_ZOOM)) then return end
 	if (State == STATE_FLAMIN) then return end
 	
 	if SERVER then
@@ -328,7 +328,7 @@ function SWEP:SecondaryAttack()
 			if (self.NextIgniteTry < Time) then
 				self.NextIgniteTry = Time + 1
 				self:SetState(STATE_FIZZLIN)
-				self.Owner:EmitSound("snd_jack_spoonfling.ogg", 75, 100)
+				self:GetOwner():EmitSound("snd_jack_spoonfling.ogg", 75, 100)
 				if self.SoundLoop then self.SoundLoop:Stop() end
 				self.SoundLoop = CreateSound(self, "snds_jack_gmod/flareburn.wav")
 				self.SoundLoop:SetSoundLevel(75)
@@ -345,7 +345,7 @@ function SWEP:SecondaryAttack()
 			end
 		elseif (State == STATE_IGNITIN) then
 			local FirePos, FireAng = self:GetNozzle()
-			local IgniteTr = util.QuickTrace(FirePos, FireAng:Forward() * 80, self.Owner)
+			local IgniteTr = util.QuickTrace(FirePos, FireAng:Forward() * 80, self:GetOwner())
 			if IgniteTr.Hit then
 				for k, v in pairs(ents.FindInSphere(IgniteTr.HitPos, 20)) do
 					if v.JModHighlyFlammableFunc then
@@ -363,11 +363,11 @@ function SWEP:SecondaryAttack()
 end
 
 function SWEP:Msg(msg)
-	self.Owner:PrintMessage(HUD_PRINTCENTER, msg)
+	self:GetOwner():PrintMessage(HUD_PRINTCENTER, msg)
 end
 
 function SWEP:Pawnch()
-	self.Owner:SetAnimation(PLAYER_ATTACK1)
+	self:GetOwner():SetAnimation(PLAYER_ATTACK1)
 	self:UpdateNextIdle()
 end
 
@@ -392,9 +392,11 @@ function SWEP:TryLoadResource(typ, amt)
 end
 --
 function SWEP:OnDrop()
-	if IsValid(self.Owner) then
-		if self.EZarmorID and self.Owner.EZarmor and self.Owner.EZarmor.items[self.EZarmorID] then
-			JMod.RemoveArmorByID(self.Owner, self.EZarmorID)
+	if !IsValid(self.EZdropper) or !self.EZdropper:Alive() then return end
+	
+	if IsValid(self:GetOwner()) then
+		if self.EZarmorID and self:GetOwner().EZarmor and self:GetOwner().EZarmor.items[self.EZarmorID] then
+			JMod.RemoveArmorByID(self:GetOwner(), self.EZarmorID)
 		end
 	end
 
@@ -406,8 +408,8 @@ function SWEP:OnRemove()
 
 	self:Cease()
 
-	if IsValid(self.Owner) and CLIENT and self.Owner:IsPlayer() then
-		local vm = self.Owner:GetViewModel()
+	if IsValid(self:GetOwner()) and CLIENT and self:GetOwner():IsPlayer() then
+		local vm = self:GetOwner():GetViewModel()
 
 		if IsValid(vm) then
 			vm:SetMaterial("")
@@ -442,8 +444,8 @@ function SWEP:Holster(wep)
 
 	self:Cease()
 
-	if IsValid(self.Owner) and CLIENT and self.Owner:IsPlayer() then
-		local vm = self.Owner:GetViewModel()
+	if IsValid(self:GetOwner()) and CLIENT and self:GetOwner():IsPlayer() then
+		local vm = self:GetOwner():GetViewModel()
 
 		if IsValid(vm) then
 			vm:SetMaterial("")
@@ -454,12 +456,12 @@ function SWEP:Holster(wep)
 end
 
 function SWEP:Deploy()
-	if not IsValid(self.Owner) then return end
+	if not IsValid(self:GetOwner()) then return end
 	if SERVER then
-		if self.EZarmorID and not(self.Owner.EZarmor and self.Owner.EZarmor.items[self.EZarmorID]) then
+		if self.EZarmorID and not(self:GetOwner().EZarmor and self:GetOwner().EZarmor.items[self.EZarmorID]) then
 			SafeRemoveEntity(self)
 		end
-		JMod.Hint(self.Owner, "flamethrower ignite")
+		JMod.Hint(self:GetOwner(), "flamethrower ignite")
 	end
 
 	local Time = CurTime()
@@ -467,8 +469,8 @@ function SWEP:Deploy()
 	self:SetNextSecondaryFire(Time + 1)
 	self.NextExtinguishTime = Time
 
-	if not(self.Owner:IsPlayer()) then return end
-	local vm = self.Owner:GetViewModel()
+	if not(self:GetOwner():IsPlayer()) then return end
+	local vm = self:GetOwner():GetViewModel()
 
 	if IsValid(vm) and vm.LookupSequence then
 		Downness = 10
@@ -488,7 +490,7 @@ function SWEP:Think()
 		self:UpdateNextIdle()
 	end
 
-	if self.Owner:IsPlayer() and (self.Owner:IsSprinting() or self.Owner:KeyDown(IN_ZOOM)) then
+	if self:GetOwner():IsPlayer() and (self:GetOwner():IsSprinting() or self:GetOwner():KeyDown(IN_ZOOM)) then
 		self:SetHoldType("normal")
 		if (State > STATE_NOTHIN) then
 			self:Cease()
@@ -506,8 +508,8 @@ function SWEP:Think()
 				local Fsh = EffectData()
 				Fsh:SetOrigin(FirePos)
 				Fsh:SetScale(((State == STATE_IGNITIN) and 1) or 0.5)
-				Fsh:SetNormal(self.Owner:GetAimVector())
-				Fsh:SetStart(self.Owner:GetVelocity())
+				Fsh:SetNormal(self:GetOwner():GetAimVector())
+				Fsh:SetStart(self:GetOwner():GetVelocity())
 				Fsh:SetEntity(NULL)
 				Fsh:SetAttachment(1)
 				util.Effect("eff_jack_gmod_flareburn", Fsh, true, true)
@@ -516,8 +518,8 @@ function SWEP:Think()
 	end
 
 	if SERVER then
-		if ((State == STATE_FLAMIN) and (self.Owner:IsPlayer() and not self.Owner:KeyDown(IN_ATTACK))) or ((State > STATE_NOTHIN) and (self.NextExtinguishTime < Time)) then
-			if self.Owner:IsPlayer() and self.Owner:KeyDown(IN_ATTACK2) then
+		if ((State == STATE_FLAMIN) and (self:GetOwner():IsPlayer() and not self:GetOwner():KeyDown(IN_ATTACK))) or ((State > STATE_NOTHIN) and (self.NextExtinguishTime < Time)) then
+			if self:GetOwner():IsPlayer() and self:GetOwner():KeyDown(IN_ATTACK2) then
 				self:SetState(STATE_IGNITIN)
 				if self.SoundLoop then self.SoundLoop:Stop() end
 				self.SoundLoop = CreateSound(self, "snds_jack_gmod/flareburn.wav")
@@ -527,8 +529,8 @@ function SWEP:Think()
 				self:Cease()
 			end
 		end
-		if self.EZarmorID and self.Owner.EZarmor and self.Owner.EZarmor.items[self.EZarmorID] then
-			local ArmorItem = self.Owner.EZarmor.items[self.EZarmorID]
+		if self.EZarmorID and self:GetOwner().EZarmor and self:GetOwner().EZarmor.items[self.EZarmorID] then
+			local ArmorItem = self:GetOwner().EZarmor.items[self.EZarmorID]
 			self:SetFuel(ArmorItem.chrg.fuel)
 			--self:SetGas(ArmorItem.chrg.gas)
 		end
@@ -540,7 +542,7 @@ end
 
 function SWEP:DrawHUD()
 	if GetConVar("cl_drawhud"):GetBool() == false then return end
-	local Ply = self.Owner
+	local Ply = self:GetOwner()
 	if Ply:ShouldDrawLocalPlayer() then return end
 	local W, H = ScrW(), ScrH()
 
@@ -550,8 +552,8 @@ end
 
 ----------------- sck -------------------
 function SWEP:SCKHolster()
-	if CLIENT and IsValid(self.Owner) and self.Owner:IsPlayer() then
-		local vm = self.Owner:GetViewModel()
+	if CLIENT and IsValid(self:GetOwner()) and self:GetOwner():IsPlayer() then
+		local vm = self:GetOwner():GetViewModel()
 
 		if IsValid(vm) then
 			self:ResetBonePositions(vm)
@@ -569,8 +571,8 @@ function SWEP:SCKInitialize()
 		self:CreateModels(self.WElements) -- create worldmodels
 
 		-- init view model bone build function
-		if IsValid(self.Owner) and self.Owner:IsPlayer() then
-			local vm = self.Owner:GetViewModel()
+		if IsValid(self:GetOwner()) and self:GetOwner():IsPlayer() then
+			local vm = self:GetOwner():GetViewModel()
 
 			if IsValid(vm) then
 				self:ResetBonePositions(vm)
@@ -596,8 +598,8 @@ if CLIENT then
 	SWEP.vRenderOrder = nil
 
 	function SWEP:SCKViewModelDrawn()
-		if not self.Owner:IsPlayer() then return end
-		local vm = self.Owner:GetViewModel()
+		if not self:GetOwner():IsPlayer() then return end
+		local vm = self:GetOwner():GetViewModel()
 		if not IsValid(vm) then return end
 		if not self.VElements then return end
 		self:UpdateBonePositions(vm)
@@ -711,8 +713,8 @@ if CLIENT then
 
 		local bone_ent
 
-		if IsValid(self.Owner) then
-			bone_ent = self.Owner
+		if IsValid(self:GetOwner()) then
+			bone_ent = self:GetOwner()
 		else
 			-- when the weapon is dropped
 			bone_ent = self
@@ -821,7 +823,7 @@ if CLIENT then
 				pos, ang = m:GetTranslation(), m:GetAngles()
 			end
 
-			if IsValid(self.Owner) and self.Owner:IsPlayer() and ent == self.Owner:GetViewModel() and self.ViewModelFlip then
+			if IsValid(self:GetOwner()) and self:GetOwner():IsPlayer() and ent == self:GetOwner():GetViewModel() and self.ViewModelFlip then
 				ang.r = -ang.r -- Fixes mirrored models
 			end
 		end

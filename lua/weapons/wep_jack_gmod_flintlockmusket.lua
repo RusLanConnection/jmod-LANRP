@@ -186,7 +186,7 @@ SWEP.Animations = {
 	},
 	["reload_empty"] = {
 		Source = "reload_empty",
-		Time = 9,
+		Time = 7,
 		TPAnim = ACT_HL2MP_GESTURE_RELOAD_AR2,
 		Checkpoints = {24, 42, 59, 71, 89},
 		FrameRate = 37,

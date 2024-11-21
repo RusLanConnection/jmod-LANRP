@@ -96,7 +96,7 @@ ENT.StaticPerfSpecs = {
 }
 ENT.DynamicPerfSpecs = {
 	MaxAmmo = 300,
-	TurnSpeed = 60,
+	TurnSpeed = 150,
 	TargetingRadius = 25,
 	Armor = 3,
 	FireRate = 6,

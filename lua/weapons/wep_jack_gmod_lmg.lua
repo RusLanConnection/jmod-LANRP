@@ -15,7 +15,7 @@ JMod.ApplyAmmoSpecs(SWEP, "Light Rifle Round", .9)
 SWEP.Primary.ClipSize = 150 -- DefaultClip is automatically set.
 SWEP.ChamberSize = 0 -- open-bolt firearm lol
 SWEP.Recoil = .3
-SWEP.Delay = 60 / 750 -- 60/RPM.
+SWEP.Delay = 55 / 750 -- 60/RPM.
 
 SWEP.Firemodes = {
 	{
@@ -27,7 +27,7 @@ SWEP.Firemodes = {
 	}
 }
 
-SWEP.AccuracyMOA = 4 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
+SWEP.AccuracyMOA = 10 -- accuracy in Minutes of Angle. There are 60 MOA in a degree.
 SWEP.FirstShootSound = "snds_jack_gmod/ez_weapons/light_rifle.ogg"
 SWEP.ShootSound = "snds_jack_gmod/ez_weapons/light_rifle.ogg"
 SWEP.DistantShootSound = "snds_jack_gmod/ez_weapons/rifle_far.ogg"

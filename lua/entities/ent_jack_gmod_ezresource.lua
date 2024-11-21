@@ -245,7 +245,7 @@ if SERVER then
 	function ENT:Use(activator)
 		local AltPressed, Count = activator:KeyDown(JMod.Config.General.AltFunctionKey), self:GetResource()
 
-		if AltPressed and activator:KeyDown(IN_SPEED) then
+		if AltPressed and activator:KeyDown(IN_SPEED) and self:GetClass() ~= "ent_jack_gmod_ezsand" then
 			-- split resource entity in half
 			if Count > 1 then
 				local NewCountOne, NewCountTwo = math.ceil(Count / 2), math.floor(Count / 2)

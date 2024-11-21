@@ -35,7 +35,7 @@ if SERVER then
 			if IsValid(Ragdoll) then
 				for i = 1, Ragdoll:GetPhysicsObjectCount() do
 					local Phys = Ragdoll:GetPhysicsObjectNum(i - 1)
-					if (Phys) and IsValid(Phys)then
+					if Phys and IsValid(Phys)then
 						local pos, ang = Ply:GetBonePosition(Ply:TranslatePhysBoneToBone(i - 1))
 						Phys:SetPos(pos)
 						Phys:SetVelocity(Ply:GetVelocity())

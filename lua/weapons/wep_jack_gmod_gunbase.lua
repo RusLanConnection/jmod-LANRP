@@ -153,7 +153,7 @@ SWEP.Hook_PostFireBullets = function(self)
 			RPos = RPos + Up * self.ShootEntityOffset.z + Right * self.ShootEntityOffset.x + Forward * self.ShootEntityOffset.y
 		end
 
-		local Dist = 230
+		local Dist = 500
 
 		local Tr = util.QuickTrace(RPos, -RDir * Dist, function(fuck)
 			if fuck:IsPlayer() or fuck:IsNPC() then return false end
@@ -403,6 +403,8 @@ function SWEP:Holster()
 end
 --]]
 function SWEP:OnDrop()
+	if !IsValid(self.EZdropper) or !self.EZdropper:Alive() then return end
+
 	local Specs = JMod.WeaponTable[self.PrintName]
 
 	if Specs then

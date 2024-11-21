@@ -332,6 +332,8 @@ end
 
 --
 function SWEP:OnDrop()
+	if !IsValid(self.EZdropper) or !self.EZdropper:Alive() then return end
+	
 	local Ent = ents.Create(self.DropEnt)
 	Ent:SetPos(self:GetPos())
 	Ent:SetAngles(self:GetAngles())

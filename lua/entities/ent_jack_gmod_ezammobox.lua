@@ -90,7 +90,7 @@ if SERVER then
 	function ENT:Use(activator)
 		local Alt = activator:KeyDown(JMod.Config.General.AltFunctionKey)
 
-		if Alt then
+		if not Alt then
 			activator:PickupObject(self)
 		else
 			JMod.GiveAmmo(activator, self)

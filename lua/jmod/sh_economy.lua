@@ -108,7 +108,7 @@ JMod.ResourceDepositInfo = {
 	[JMod.EZ_RESOURCE_TYPES.OIL] = {
 		frequency = 8,
 		avgamt = 600,
-		avgsize = 270,
+		avgsize = 170,
 		boosts = {
 			water = 2
 		},
@@ -516,7 +516,14 @@ local SalvagingTable = {
 }
 
 local SpecializedSalvagingTable = {
-	classname = {}, -- todo: implement
+	classname = {
+
+		["build_prop"] = {
+			[JMod.EZ_RESOURCE_TYPES.CERAMIC] = 5
+		},
+
+	},
+
 	modelname = {
 		{
 			substrings = {"crate_fruit", "fruit_crate"},
@@ -777,7 +784,7 @@ function JMod.GetSalvageYield(ent)
 		Mass = Mass / 2
 	end
 
-	if Mass > 10000 then return {}, "cannot salvage: too large" end
+	if Mass > 10000 and ent:GetClass() ~= "build_prop" then return {}, "cannot salvage: too large" end
 	if ent:IsNPC() or ent:IsPlayer() then return {}, (tostring(ent.PrintName or "They") .. " don't want to be salvaged") or ".." end
 	
 	local AnnoyedReplyTable = {
@@ -787,11 +794,14 @@ function JMod.GetSalvageYield(ent)
 		"Я стал гаечным ключом, разрушителем сущностей",
 		"ХВАТИТ!",
 		"Ты не разберёшь это",
-		"ДА ТЫ ЗОЕБАЛ",
+		"БАЛБЕС",
 	}
 	if ent.IsJackyEZresource or ent.EZammo then return {}, table.Random(AnnoyedReplyTable) end
 	if Class == "ent_jack_gmod_eztoolbox" then return {}, table.Random(AnnoyedReplyTable) end
 	if Class == "ent_jack_ezcompactbox" then return {}, table.Random(AnnoyedReplyTable) end
+	
+	
+	if Class == "build_prop" then return {[JMod.EZ_RESOURCE_TYPES.CERAMIC] = 5} end
 
 	if SERVER then
 		for k, v in pairs(JMod.Config.Tools.Toolbox.SalvagingBlacklist) do
@@ -991,8 +1001,8 @@ if SERVER then
 
 		if Ent then
 			local Yield, Msg = JMod.GetSalvageYield(Ent)
-			--print(Msg) -- ДЕБАГ
-			--PrintTable(Yield) -- ДЕБАГ
+			print(Msg) -- ДЕБАГ
+			PrintTable(Yield) -- ДЕБАГ
 		end
 	end, nil, "prints out the potential resource yield from the object you're looking at")
 
@@ -1192,7 +1202,7 @@ if SERVER then
 							end
 						end
 
-						local Resources, MaxResourceDepositCount = {}, 1000
+						local Resources, MaxResourceDepositCount = {}, 600
 
 						for k, PosInfo in pairs(GroundVectors) do
 							if #Resources < MaxResourceDepositCount then

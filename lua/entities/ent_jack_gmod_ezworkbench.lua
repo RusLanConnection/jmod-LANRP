@@ -127,8 +127,8 @@ if(SERVER)then
 								else
 									JMod.BuildRecipe(ItemInfo.results, ply, Pos, Ang, ItemInfo.skin)
 									JMod.BuildEffect(Pos)
-									self:ConsumeElectricity(8)
-									self:ConsumeGas(6)
+									--self:ConsumeElectricity(8)
+									--self:ConsumeGas(6)
 									self:UpdateWireOutputs()
 								end
 							end

@@ -87,7 +87,7 @@ SWEP.Animations = {
 	},
 	["draw"] = {
 		Source = "draw",
-		Time = 1.5,
+		Time = 1,
 		SoundTable = {
 			{
 				s = JMod.GunHandlingSounds.draw.longgun,
@@ -126,7 +126,7 @@ SWEP.Animations = {
 	},
 	["reload_empty"] = {
 		Source = "reload",
-		Time = 3,
+		Time = 2.5,
 		TPAnim = ACT_HL2MP_GESTURE_RELOAD_AR2,
 		Checkpoints = {24, 42, 59, 71, 89},
 		FrameRate = 37,
