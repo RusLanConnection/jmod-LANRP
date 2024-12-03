@@ -382,7 +382,7 @@ local SalvagingTable = {
 		[JMod.EZ_RESOURCE_TYPES.CHEMICALS] = .5
 	},
 	glassbottle = {
-		[JMod.EZ_RESOURCE_TYPES.WATER] = .4,
+		[JMod.EZ_RESOURCE_TYPES.WATER] = .6,
 		[JMod.EZ_RESOURCE_TYPES.ORGANICS] = .2,
 		[JMod.EZ_RESOURCE_TYPES.CHEMICALS] = .4
 	},
@@ -678,6 +678,7 @@ local SpecializedSalvagingTable = {
 			yield = {
 				[JMod.EZ_RESOURCE_TYPES.PLASTIC] = .1,
 				[JMod.EZ_RESOURCE_TYPES.CHEMICALS] = .9,
+				[JMod.EZ_RESOURCE_TYPES.WATER] = .5,
 			}
 		},
 		{

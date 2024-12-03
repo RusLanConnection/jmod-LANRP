@@ -112,7 +112,7 @@ if SERVER then
 
 		---
 		local Phys = self:GetPhysicsObject()
-		timer.Simple(.01, function()
+		timer.Simple(0, function()
 			if IsValid(Phys) then
 				if self.PhysMat then
 					Phys:SetMaterial(self.PhysMat)

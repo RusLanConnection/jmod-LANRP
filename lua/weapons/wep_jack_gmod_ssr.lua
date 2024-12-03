@@ -11,7 +11,7 @@ SWEP.BodyHolsterAngL = Angle(0, 195, 170)
 SWEP.BodyHolsterPos = Vector(2, -11, -11)
 SWEP.BodyHolsterPosL = Vector(1, -11, 11)
 SWEP.BodyHolsterScale = .9
-JMod.ApplyAmmoSpecs(SWEP, "Medium Rifle Round", 1.3)
+JMod.ApplyAmmoSpecs(SWEP, "Magnum Rifle Round", 1.7)
 SWEP.Primary.ClipSize = 1 -- DefaultClip is automatically set.
 SWEP.Recoil = 1.5
 SWEP.Delay = 60 / 100 -- 60/RPM.

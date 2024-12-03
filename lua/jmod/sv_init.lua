@@ -324,7 +324,7 @@ local function VirusHostThink(dude)
 			dude.EZvirus.InfectionWarned = true
 
 			if dude.PrintMessage then
-				dude:PrintMessage(HUD_PRINTTALK, "You've contracted the JMod virus. Get medical attention, eat food, and avoid contact with others.")
+				dude:PrintMessage(HUD_PRINTTALK, "Вы заразились трупным вирусом. Обратитесь за медицинской помощью, много ешьте и избегайте контактов с другими людьми.")
 			end
 		end
 
@@ -335,7 +335,7 @@ local function VirusHostThink(dude)
 			dude.EZvirus.Immune = true
 
 			if dude.PrintMessage then
-				dude:PrintMessage(HUD_PRINTTALK, "You are now immune to the JMod virus.")
+				dude:PrintMessage(HUD_PRINTTALK, "Теперь у вас есть иммунитет к вирусу.")
 			end
 		end
 	end

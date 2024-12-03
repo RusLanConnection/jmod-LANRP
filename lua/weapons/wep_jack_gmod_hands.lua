@@ -442,7 +442,7 @@ function SWEP:Reload()
 			local Tar = self:GetCarrying()
 			local ply = self:GetOwner()
 			
-			JMod.EZ_GrabItem(ply, nil, {Tar:EntIndex()})
+			JMod.EZ_GrabItem(ply, nil, {Tar})
 		else
 			--[[if self:GetOwner():HasWeapon("wep_jack_gmod_eztoolbox") then
 				local ToolBox = self:GetOwner():GetWeapon("wep_jack_gmod_eztoolbox")

@@ -152,7 +152,7 @@ if SERVER then
 		self.Hooker = Hooky
 
 		self.CurrentCableLength = 20
-		self.Chain, self.VisualRope = constraint.Elastic(Hooky, self, 0, 0, Vector(0,0,9), Vector(-7.5,10,3), 5000, 10, 2, "cable/mat_jack_gmod_chain", 2, true)
+		self.Chain, self.VisualRope = constraint.Elastic(Hooky, self, 0, 0, Vector(0,0,9), Vector(-7.5,10,3), 20000, 10, 2, "cable/mat_jack_gmod_chain", 2, true)
 		self.VisualRope:SetKeyValue( "Collide", "false")
 		Hooky.Chain = self.Chain
 

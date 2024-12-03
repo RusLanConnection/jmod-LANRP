@@ -91,7 +91,7 @@ if SERVER then
 								end)
 							end
 							timer.Simple(0, function()
-								local Weld = constraint.Weld(self, data.HitEntity, 0, 0, 8000, true, false)
+								local Weld = constraint.Weld(self, data.HitEntity, 0, 0, 100000, true, false)
 								self.StuckTo = data.HitEntity
 								self.StuckStick = Weld
 							end)

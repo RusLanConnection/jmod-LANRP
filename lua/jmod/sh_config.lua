@@ -83,7 +83,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 			DoorBreachResetTimeMult = 1,
 			FragExplosions = false,
 			PropDestroyPower = 0,
-			BombOwnershipLossOnRespawn = false
+			BombOwnershipLossOnRespawn = true
 		},
 		Particles = {
 			VirusSpreadMult = 1,
@@ -1725,7 +1725,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				results = "ent_jack_gmod_ezpaper",
 				craftingReqs = {
 					[JMod.EZ_RESOURCE_TYPES.WOOD] = 30,
-					[JMod.EZ_RESOURCE_TYPES.WATER] = 70
+					[JMod.EZ_RESOURCE_TYPES.WATER] = 40
 				},
 				category = "Resources",
 				craftingType = {"workbench", "craftingtable"},
@@ -1815,11 +1815,11 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				craftingType = "workbench",
 				description = "A simple revolver. Fires 6 shots"
 			},
-			["EZ Single-Shot Rifle, x5"] = {
-				results = {JMod.WeaponTable["Single-Shot Rifle"].ent, 5},
+			["EZ Bolt Rifle, x5"] = {
+				results = {JMod.WeaponTable["Kar-98k"].ent, 5},
 				craftingReqs = {
-					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 75,
-					[JMod.EZ_RESOURCE_TYPES.WOOD] = 25
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 200,
+					[JMod.EZ_RESOURCE_TYPES.WOOD] = 200
 				},
 				category = "Weapons",
 				craftingType = "workbench",
@@ -3570,20 +3570,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 		Ent:Activate()
 	end
 
-	local NailBlacklist = {
-		["lvs_trailer_zis3"] = true,
-		["lvs_trailer_schneider"] = true,
-		["lvs_wheeldrive_wheel"] = true
-	}
-
 	JMod.LuaConfig.BuildFuncs.EZnail = function(playa, position, angles)
-		
-		local tr = util.QuickTrace( playa:GetShootPos(), playa:GetShootPos() + playa:GetAimVector() * 128, playa )
-
-		debugoverlay.Line( playa:GetShootPos(), playa:GetShootPos() + playa:GetAimVector() * 128, 2, Color( 255, 0, 0 ), true )
-		print(tr.Entity)
-		if NailBlacklist[tr.Entity:GetClass()] then return end
-
 		JMod.Nail(playa)
 	end
 

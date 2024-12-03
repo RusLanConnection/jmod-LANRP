@@ -341,11 +341,20 @@ function JMod.FindNailPos(ply, origin, dir)
 	end
 end
 
+local NailBlacklist = {
+	["lvs_trailer_zis3"] = true,
+	["lvs_trailer_schneider"] = true,
+	["lvs_wheeldrive_wheel"] = true
+}
+
 function JMod.Nail(ply)
 	local Success, Pos, Vec, Ent1, Ent2 = JMod.FindNailPos(ply)
 	if not Success then return end
 	local Weld = constraint.Find(Ent1, Ent2, "Weld", 0, 0)
 	local DistMult = 1
+
+	if NailBlacklist[Ent1:GetClass()] then ply:PrintMessage(HUD_PRINTCENTER, "Ты не можешь прикрепить сюда") return end
+	if NailBlacklist[Ent2:GetClass()] then ply:PrintMessage(HUD_PRINTCENTER, "Ты не можешь прикрепить сюда") return end
 
 	Ent1.EZnails = Ent1.EZnails or {}
 	if Ent1.EZnails[1] then
@@ -436,74 +445,6 @@ function JMod.GetPackagableObject(packager, origin, dir)
 	end
 
 	return nil
-end
-
-function JMod.Package(packager)
-	local Ent, Message = JMod.GetPackagableObject(packager)
-
-	if Ent then
-		JMod.PackageObject(Ent)
-		sound.Play("snds_jack_gmod/packagify.ogg", packager:GetPos(), 60, math.random(90, 110))
-
-		for i = 1, 3 do
-			timer.Simple(i / 3, function()
-				if IsValid(packager) then
-					sound.Play("snds_jack_gmod/ez_tools/" .. math.random(1, 27) .. ".ogg", packager:GetPos(), 60, math.random(80, 120))
-				end
-			end)
-		end
-	elseif isstring(Message) then
-		packager:PrintMessage(HUD_PRINTCENTER, Message)
-	end
-end
-
-function JMod.PackageObject(ent, pos, ang, ply)
-	if pos then
-		ent = ents.Create(ent)
-		ent:SetPos(pos)
-		ent:SetAngles(ang)
-
-		if ply then
-			JMod.SetEZowner(ent, ply)
-		end
-
-		ent:Spawn()
-		ent:Activate()
-	end
-
-	local Bocks = ents.Create("ent_jack_gmod_ezcompactbox")
-	Bocks:SetPos(ent:LocalToWorld(ent:OBBCenter()) + Vector(0, 0, 20))
-	Bocks:SetAngles(ent:GetAngles())
-	Bocks:SetContents(ent)
-
-	if ply then
-		JMod.SetEZowner(Bocks, ply)
-	end
-
-	Bocks:Spawn()
-	Bocks:Activate()
-	return Bocks
-end
-
-function JMod.Rope(ply, origin, dir, width, strength, mat)
-	local RopeStartData = ply and ply.EZropeData
-	if not(RopeStartData) or not IsValid(RopeStartData.Ent) then
-		if origin and dir then
-			local RopeStartTr = util.QuickTrace(origin, dir * 80)
-			if not(RopeStartTr.Hit) then return end
-			RopeStartData = {Pos = RopeStartTr.Entity:WorldToLocal(RopeStartTr.HitPos), Ent = RopeStartTr.Entity}
-		else
-
-			return
-		end
-	end
-
-	local RopeTr = util.QuickTrace(origin or ply:GetShootPos(), (dir or ply:GetAimVector()) * 80, {ply})
-	local LropePos1, LropePos2 = ply.EZropeData.Pos, RopeTr.Entity:WorldToLocal(RopeTr.HitPos)
-	local Dist = ply.EZropeData.Ent:LocalToWorld(RopeStartData.Pos):Distance(RopeTr.HitPos)
-
-	local Rope, Vrope = constraint.Rope(ply.EZropeData.Ent, RopeTr.Entity, 0, 0, LropePos1, LropePos2, Dist, 0, strength or 5000, width or 2, mat or "cable/cable2", false)
-	return Rope, RopeTr.Entity
 end
 
 function JMod.BuildRecipe(results, ply, Pos, Ang, skinNum)

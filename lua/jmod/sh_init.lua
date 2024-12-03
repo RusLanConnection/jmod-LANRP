@@ -116,6 +116,8 @@ function JMod.PlayersCanComm(listener, talker, text)
 		
 		return false
 	end
+
+	return false
 end
 
 ---

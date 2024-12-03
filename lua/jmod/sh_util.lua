@@ -166,7 +166,12 @@ end
 
 function JMod.VisCheck(pos, target, sourceEnt)
 	local filter = {}
-	pos = pos or (IsValid(sourceEnt) and sourceEnt:LocalToWorld(sourceEnt:OBBCenter()))
+	pos = pos or (sourceEnt and sourceEnt:LocalToWorld(sourceEnt:OBBCenter()))
+	local targetclass = target:GetClass()
+
+	if sourceEnt:IsWeapon() then
+		pos = sourceEnt:GetOwner():EyePos()
+	end
 
 	if sourceEnt then
 		table.insert(filter, sourceEnt)
@@ -198,8 +203,7 @@ end
 
 function JMod.CountResourcesInRange(pos, range, sourceEnt, cache)
 	if cache then return cache end
-	pos = pos or (sourceEnt and sourceEnt:LocalToWorld(sourceEnt:OBBCenter()))
-
+	pos = pos or (IsValid(sourceEnt) and sourceEnt:LocalToWorld(sourceEnt:OBBCenter()))
 	local Results = {}
 	--debugoverlay.Cross(pos, 10, 2, Color(255, 255, 255), true)
 
@@ -258,7 +262,7 @@ end
 
 function JMod.ConsumeResourcesInRange(requirements, pos, range, sourceEnt, useResourceEffects, propsToConsume, mult)
 	mult = mult or 1
-	pos = (sourceEnt and sourceEnt:LocalToWorld(sourceEnt:OBBCenter())) or pos
+	pos = pos or (sourceEnt and sourceEnt:LocalToWorld(sourceEnt:OBBCenter()))
 	local AllDone, Attempts, RequirementsRemaining = false, 0, table.FullCopy(requirements)
 
 	while not (AllDone or (Attempts > 1000)) do
@@ -335,16 +339,16 @@ function JMod.FindResourceContainer(typ, amt, pos, range, sourceEnt)
 	for k, obj in pairs(ents.FindInSphere(pos, range or 150)) do
 		if not(sourceEnt and obj == sourceEnt) then
 			if obj.GetEZsupplies then
-				local AvaliableResources = obj:GetEZsupplies(typ)
-				if AvaliableResources and (AvaliableResources >= amt) then
+				local AvailableResources = obj:GetEZsupplies(typ)
+				if AvailableResources and (AvailableResources >= amt) then
 					if JMod.VisCheck(pos, obj, sourceEnt) then
 
 						return obj
 					end
 				end
 			elseif obj.JModInv then
-				local AvaliableResources = obj.JModInv.EZresources[typ]
-				if AvaliableResources and (AvaliableResources >= amt) then
+				local AvailableResources = obj.JModInv.EZresources[typ]
+				if AvailableResources and (AvailableResources >= amt) then
 					if JMod.VisCheck(pos, obj, sourceEnt) then
 
 						return obj
@@ -354,9 +358,9 @@ function JMod.FindResourceContainer(typ, amt, pos, range, sourceEnt)
 		end
 	end
 	if ValidSource and sourceEnt.GetEZsupplies then
-		local AvaliableResources = sourceEnt:GetEZsupplies(typ)
-		if AvaliableResources then
-			if (typ and AvaliableResources >= amt) then
+		local AvailableResources = sourceEnt:GetEZsupplies(typ)
+		if AvailableResources then
+			if (typ and AvailableResources >= amt) then
 
 				return sourceEnt
 			end
@@ -366,7 +370,7 @@ end
 
 function JMod.FindSuitableScrap(pos, range, sourceEnt)
 	pos = (sourceEnt and sourceEnt:LocalToWorld(sourceEnt:OBBCenter())) or pos
-	local AvaliableResources, LocalScrap = {}, {}
+	local AvailableResources, LocalScrap = {}, {}
 
 	for k, obj in ipairs(ents.FindInSphere(pos, range or 200)) do 
 		local Clss = obj:GetClass()
@@ -379,14 +383,14 @@ function JMod.FindSuitableScrap(pos, range, sourceEnt)
 					LocalScrap[EntID] = {}
 					for k, v in pairs(Yield) do
 						LocalScrap[EntID][k] = v
-						AvaliableResources[k] = (AvaliableResources[k] or 0) + v
+						AvailableResources[k] = (AvailableResources[k] or 0) + v
 					end
 				end
 			end
 		end
 	end
 
-	return AvaliableResources, LocalScrap
+	return AvailableResources, LocalScrap
 end
 
 function JMod.TryCough(ent)
@@ -407,7 +411,7 @@ end
 
 function JMod.ClearLoS(ent1, ent2, ignoreWater, up, onlyHitWorld)
 	if not IsValid(ent2) then return false end
-	local SelfPos, TargPos = ent1:LocalToWorld(ent1:OBBCenter()) + vector_up * (up or 1), ent2:LocalToWorld(ent2:OBBCenter()) + vector_up
+	local SelfPos, TargPos = ent1:LocalToWorld(ent1:OBBCenter()) + ent1:GetUp() * (up or 1), ent2:LocalToWorld(ent2:OBBCenter())
 
 	local Mask = MASK_SHOT + MASK_WATER
 	if onlyHitWorld then
@@ -427,9 +431,11 @@ function JMod.ClearLoS(ent1, ent2, ignoreWater, up, onlyHitWorld)
 end
 
 function JMod.PlyHasArmorEff(ply, eff)
-	if IsValid(ply) and ply.EZarmor and eff then
-		if (ply.EZarmor and istable(ply.EZarmor.effects)) then
+	if IsValid(ply) and ply.EZarmor and ply.EZarmor.effects then 
+		if eff then
 			return ply.EZarmor.effects[eff]
+		else
+			return ply.EZarmor.effects
 		end
 	else
 		return false

@@ -117,17 +117,17 @@ if(SERVER)then
 		end
 	end
 
-	local function FindNaturalResourcesInRange(pos, rng, tbl)
-		local Res = {}
-		for k, v in pairs(tbl) do
-			local DiffVec = pos - v.pos
-			if (math.abs(DiffVec.x) - v.siz*.5 <= rng) and (math.abs(DiffVec.y) - v.siz*.5 <= rng) then
-				table.insert(Res, {
-					typ = v.typ,
-					pos = v.pos,
-					siz = v.siz,
-					rate = v.rate,
-					amt = v.amt
+	local function FindNaturalResourcesInRange(pos,rng,tbl)
+		rng=rng*52 -- meters to source units
+		local Res={}
+		for k,v in pairs(tbl)do
+			if((v.pos:Distance(pos))<rng)then
+				table.insert(Res,{
+					typ=v.typ,
+					pos=v.pos,
+					siz=v.siz,
+					rate=v.rate,
+					amt=v.amt
 				})
 			end
 		end

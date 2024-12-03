@@ -298,7 +298,7 @@ function LocationalDmgHandling(ply, hitgroup, dmg)
 	else
 		Mul = Mul * AmmoHPmul
 	end
-	
+
 	dmg:ScaleDamage(Mul)
 
 	return Mul
