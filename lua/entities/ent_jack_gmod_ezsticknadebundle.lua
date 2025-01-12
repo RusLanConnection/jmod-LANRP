@@ -9,14 +9,14 @@ ENT.Model = "models/jmod/explosives/grenades/bundlenade/bundle_grenade.mdl"
 ENT.Material = "models/mats_jack_nades/stick_grenade"
 --ENT.ModelScale=1.25
 ENT.SpoonModel = "models/jmod/explosives/grenades/sticknade/stick_grenade_cap.mdl"
-ENT.HardThrowStr = 200
-ENT.SoftThrowStr = 100
+ENT.HardThrowStr = 300
+ENT.SoftThrowStr = 150
 ENT.JModPreferredCarryAngles = Angle(0, 0, 0)
 ENT.EZspinThrow = true
 ENT.PinBodygroup = nil -- No pin
 ENT.SpoonBodygroup = {4, 1}
 ENT.DetDelay = 4
---ENT.EZstorageVolumeOverride=4
+--ENT.JModEZstorableVolume=4
 local BaseClass = baseclass.Get(ENT.Base)
 
 if SERVER then
@@ -53,7 +53,7 @@ if SERVER then
 					plooie:SetNormal(vector_up)
 					util.Effect("eff_jack_minesplode", plooie, true, true)
 					util.ScreenShake(SelfPos, 99999, 99999, 1, 750 * PowerMult)
-					JMod.FragSplosion(self, SelfPos + Vector(0, 0, 20), 5000, 70, 5000, JMod.GetEZowner(self))
+					JMod.FragSplosion(self, SelfPos + Vector(0, 0, 20), 3000, 70, 3500, JMod.GetEZowner(self), nil, nil, 12)
 
 					timer.Simple(.1, function()
 						for i = 1, 5 do

@@ -33,7 +33,6 @@ if SERVER then
 		self:SetNotSolid(true)
 
 		local Time = CurTime()
-		self.NextFizz = 0
 		self.Intensity = self.Intensity or math.random(self.MaxIntensity * .5, self.MaxIntensity)
 		self.Power = self.Intensity / self.MaxIntensity
 		self.Range = self.FireRange * self.Power
@@ -54,14 +53,6 @@ if SERVER then
 				util.Decal("Scorch", Tr.HitPos + Tr.HitNormal, Tr.HitPos - Tr.HitNormal, self)
 			end
 		end
-	end
-
-	local function Inflictor(ent)
-		if not IsValid(ent) then return game.GetWorld() end
-		local Infl = ent:GetDTEntity(0)
-		if IsValid(Infl) then return Infl end
-
-		return ent
 	end
 
 	local DamageBlacklist = {
@@ -101,6 +92,7 @@ if SERVER then
 	local function ShouldIgnite(ent)
 		if not IsValid(ent) then return false end
 		if ent:IsOnFire() then return false end
+		if ent.LVS then return false end
 		if ent:IsPlayer() then return true end
 		if ent:IsNPC() then return true end
 		if ent:IsNextBot() then return true end
@@ -115,23 +107,7 @@ if SERVER then
 
 	function ENT:Think()
 		local Time, Pos, Dir = CurTime(), self:GetPos(), self:GetForward()
-		local Water = self:WaterLevel()
-		local Fraction = self.Intensity / (self.MaxIntensity * 1.5)
-
-		if self.HighVisuals then
-			if self.NextFizz < Time then
-				self.NextFizz = Time + .5
-
-				if (self.Burnin) and (Water < 1) and ((math.random(1, 3) == 1) or self.HighVisuals) then
-					local Zap = EffectData()
-					Zap:SetOrigin(Pos)
-					Zap:SetScale(2.5 * Fraction)
-					Zap:SetStart(self:GetVelocity())
-					util.Effect(self.FireEffect, Zap, true, true)
-				end--]]
-			end
-		end
-
+		
 		if self.Burnin then 
 			if self.NextSound < Time then
 				self.NextSound = Time + math.Rand(.9, 1.1)
@@ -156,9 +132,19 @@ if SERVER then
 						return
 					end
 				elseif Water > 0 then
-					self:SetPos(util.TraceLine({start = Pos, endpos = Pos + Vector(0, 0, 10), filter = self}).HitPos)
+					local FireTracy = util.TraceLine({start = Pos, endpos = Pos + Vector(0, 0, 10), filter = self})
+					self:SetPos(FireTracy.HitPos)
+
+					if IsValid(FireTracy.Entity) then
+						self:SetParent(FireTracy.Entity)
+					end
 				else
-					self:SetPos(util.TraceLine({start = Pos, endpos = Pos - Vector(0, 0, 30), filter = self}).HitPos)
+					local FireTracy = util.TraceLine({start = Pos + Vector(0, 0, 10), endpos = Pos + Vector(0, 0, -30), filter = self})
+					self:SetPos(FireTracy.HitPos)
+
+					if IsValid(FireTracy.Entity) then
+						self:SetParent(FireTracy.Entity)
+					end
 				end
 
 				local FireNearby = false
@@ -231,17 +217,26 @@ if SERVER then
 					self:SetHighVisuals(true)
 				end
 
-				if vFireInstalled and (math.random(1, 100) == 1) then
+				if vFireInstalled  then
 					CreateVFireBall(math.random(20, 30), math.random(10, 20), self:GetPos(), VectorRand() * math.random(200, 400), JMod.GetEZowner(self))
 					self:Remove()
 				end
 
 				self.Intensity = math.Clamp(self.Intensity - math.Rand(0.2, 1), 0, self.MaxIntensity * 1.5)
+
+				if (Water < 1) and ((math.random(1, 3) == 1) or self.HighVisuals) then
+					local Zap = EffectData()
+					Zap:SetOrigin(Pos)
+					Zap:SetScale(2.5 * Fraction)
+					Zap:SetStart(self:GetVelocity())
+					util.Effect(self.FireEffect, Zap, true, true)
+				end
 			end
 		end
 
 		if (self.NextEnvThink < Time) then
 			self.NextEnvThink = Time + 5
+			local Water = self:WaterLevel()
 			local Pos = self:GetPos()
 			local Tr = util.QuickTrace(Pos, Vector(0, 0, 9e9), self)
 			if not (Tr.HitSky) then
@@ -280,13 +275,13 @@ if SERVER then
 
 		return true
 	end
+
 elseif CLIENT then
 	function ENT:Initialize()
 		self.HighVisuals = self:GetHighVisuals()
 
 		self.CastLight = (self.HighVisuals and (math.random(1, 5) == 1)) and JMod.Config.QoL.NiceFire
 		self.Size = self.FireRange
-		
 		self.NextFizz = 0
 		self.Offset = Vector(0, 0, 0)
 		self.SizeX = 1

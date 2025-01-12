@@ -13,6 +13,7 @@ ENT.Mass = 500
 ENT.EZcolorable = true
 ENT.JModPreferredCarryAngles = Angle(0, 0, 0)
 ENT.SpawnHeight = 10
+ENT.EZupgradable = true
 ---
 ENT.StaticPerfSpecs = {
 	MaxDurability = 100,
@@ -25,8 +26,8 @@ ENT.DynamicPerfSpecs = {
 
 function ENT:CustomSetupDataTables()
 	self:NetworkVar("Float", 1, "Progress")
-	self:NetworkVar("Float", 2, "Chemicals")
-	self:NetworkVar("Float", 3, "Fissile")
+	--self:NetworkVar("Float", 2, "Chemicals")
+	--self:NetworkVar("Float", 3, "Fissile")
 	self:NetworkVar("String", 0, "FluidType")
 end
 
@@ -34,7 +35,6 @@ local STATE_BROKEN, STATE_OFF,  STATE_ON = -1, 0, 1
 
 if SERVER then
 	function ENT:CustomInit()
-		self.EZupgradable = true
 		self.Range = 1000
 		self.NextUseTime = 0
 		self:SetProgress(0)
@@ -46,7 +46,7 @@ if SERVER then
 		if self.NextUseTime > CurTime() then return end
 		local State = self:GetState()
 		local OldOwner = JMod.GetEZowner(self)
-		local alt = activator:KeyDown(JMod.Config.General.AltFunctionKey)
+		local alt = JMod.IsAltUsing(activator)
 		JMod.SetEZowner(self, activator, true)
 		if State == STATE_BROKEN then
 			JMod.Hint(activator, "destroyed", self)
@@ -70,7 +70,8 @@ if SERVER then
 
 	function ENT:ProduceResource()
 		local SelfPos, Up, Forward, Right = self:GetPos(), self:GetUp(), self:GetForward(), self:GetRight()
-		local amt, chemAmt, fissileAmt = math.Clamp(math.floor(self:GetProgress()), 0, 100), math.min(math.floor(self:GetChemicals()), 100), math.min(math.floor(self:GetFissile()), 100)
+		local amt = math.Clamp(math.floor(self:GetProgress()), 0, 100)
+		--local chemAmt, fissileAmt = math.min(math.floor(self:GetChemicals()), 100), math.min(math.floor(self:GetFissile()), 100)
 
 		if amt <= 0 then return end
 
@@ -78,14 +79,14 @@ if SERVER then
 		self:SetProgress(math.Clamp(self:GetProgress() - amt, 0, 100))
 		JMod.MachineSpawnResource(self, self:GetFluidType(), amt, pos, Angle(0, 0, 0), -Forward, 300)
 		self:EmitSound("snds_jack_gmod/ding.ogg", 80, 120)
-		if chemAmt >= 1 then
+		--[[if chemAmt >= 1 then
 			self:SetChemicals(math.Clamp(self:GetChemicals() - chemAmt, 0, 100))
 			JMod.MachineSpawnResource(self, JMod.EZ_RESOURCE_TYPES.CHEMICALS, chemAmt, pos, Angle(0, 0, 0), -Forward, 300)
 		end
 		if fissileAmt >= 1 then
 			self:SetFissile(math.Clamp(self:GetFissile() - fissileAmt, 0, 100))
 			JMod.MachineSpawnResource(self, JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL, fissileAmt, pos, Angle(0, 0, 0), -Forward, 300)
-		end
+		end--]]
 	end
 
 	function ENT:TurnOn(activator)
@@ -138,7 +139,7 @@ if SERVER then
 			local particleTable = JMod.EZ_HAZARD_PARTICLES[v:GetClass()]
 
 			if istable(particleTable) and IsValid(v) and JMod.ClearLoS(self, v, false, 10, true) then 
-				local LinCh = JMod.LinCh(Grade * 1.1, 1, 5)
+				local LinCh = JMod.LinCh(Grade * 1.5, 1, 5)
 				if LinCh then
 					if particleTable[1] == JMod.EZ_RESOURCE_TYPES.CHEMICALS then
 						self:SetChemicals(self:GetChemicals() + particleTable[2])
@@ -148,6 +149,7 @@ if SERVER then
 
 					SafeRemoveEntity(v)
 					self:ConsumeElectricity(.2)
+					self:SetProgress(math.Clamp(self:GetProgress() - 1, 0, 100))
 				end
 			end
 		end
@@ -195,6 +197,7 @@ if SERVER then
 	function ENT:OnPostEntityPaste(ply, ent, createdEntities)
 		local Time = CurTime()
 		ent.NextUseTime = Time + math.Rand(0, 3)
+		ent.NextLogicThink = Time + math.Rand(0, 3)
 	end
 
 elseif CLIENT then

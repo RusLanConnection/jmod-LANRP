@@ -24,12 +24,17 @@ if SERVER then
 		local Ply = self.DeadPlayer
 		local Ragdoll = ents.Create("prop_ragdoll")
 		Ragdoll:SetModel(Ply:GetModel())
-		Ragdoll:SetSkin(self.DeadPlayer:GetSkin())
+		Ragdoll:SetSkin(Ply:GetSkin())
 		Ragdoll:SetBodyGroups(self.BodyGroupValues)
 		Ragdoll:SetPos(Ply:GetPos())
 		Ragdoll:SetAngles(Ply:GetAngles())
 		Ragdoll:Spawn()
 		Ragdoll:Activate()
+		for k, v in pairs(Ply:GetMaterials()) do
+			local Matty = Ply:GetSubMaterial(k - 1)
+			Ragdoll:SetSubMaterial(k - 1, Matty)
+		end
+		Ragdoll:SetColor(Ply:GetColor())
 		----------------------Kycea contribution Begin----------------------
 		timer.Simple(0, function()
 			if IsValid(Ragdoll) then
@@ -81,6 +86,15 @@ if SERVER then
 						local Weld = constraint.Weld(ArmorPiece, Ragdoll, 0, Ragdoll:TranslateBoneToPhysBone(Index), 0, true)
 						if Weld then
 							Weld:Activate()
+						end
+					end
+				else
+					local ArmorPiece = JMod.RemoveArmorByID(Ply, k)
+					if IsValid(ArmorPiece) then
+						ArmorPiece:SetPos(Ragdoll:GetPos())
+						ArmorPiece.Durability = armorData.dur
+						if ArmorInfo.chrg then
+							ArmorPiece.ArmorCharges = table.FullCopy(armorData.chrg)
 						end
 					end
 				end

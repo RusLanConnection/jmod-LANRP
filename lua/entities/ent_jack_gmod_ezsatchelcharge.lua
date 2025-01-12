@@ -15,6 +15,9 @@ ENT.EZinvPrime = false
 
 ENT.Hints = {"arm"}
 
+ENT.UsableMats = {MAT_DIRT, MAT_FOLIAGE, MAT_SAND, MAT_SLOSH, MAT_GRASS, MAT_SNOW}
+ENT.BlacklistedResources = {JMod.EZ_RESOURCE_TYPES.WATER, JMod.EZ_RESOURCE_TYPES.OIL, JMod.EZ_RESOURCE_TYPES.SAND, "geothermal"}
+
 DEFINE_BASECLASS(ENT.Base)
 
 if SERVER then
@@ -31,6 +34,8 @@ if SERVER then
 		timer.Simple(0, function()
 			plunger:SetParent(self)
 		end)
+		
+		self.NextStick = 0
 
 		if istable(WireLib) then
 			self.Inputs = WireLib.CreateInputs(self, {"Detonate"}, {"This will directly detonate the bomb"})
@@ -52,9 +57,13 @@ if SERVER then
 		self:EmitSound("weapons/c4/c4_plant.wav", 60, 80)
 		self:SetState(JMod.EZ_STATE_PRIMED)
 		self.Plunger:SetParent(nil)
-		constraint.NoCollide(self, self.Plunger, 0, 0)
-		constraint.Rope(self, self.Plunger, 0, 0, Vector(0, 0, 0), Vector(0, 0, 0), 2000, 0, 0, .5, "cable/cable", false)
-
+		local NoCollide = constraint.NoCollide(self, self.Plunger, 0, 0, true)
+		timer.Simple(.5, function()
+			if IsValid(NoCollide) then NoCollide:Remove() end
+		end)
+		self.DetCable = constraint.Rope(self, self.Plunger, 0, 0, Vector(0, 0, 0), Vector(0, 0, 0), 2000, 0, 0, .5, "cable/cable", false)
+		self.Plunger.DetCable = self.DetCable
+		
 		timer.Simple(0, function()
 			self.Plunger:SetPos(self:GetPos() + Vector(0, 0, 20))
 		end)
@@ -74,16 +83,71 @@ if SERVER then
 		if tobool(onOff) then
 			local State = self:GetState()
 			if State < 0 then return end
-			local Alt = Dude:KeyDown(JMod.Config.General.AltFunctionKey)
+			local Alt = JMod.IsAltUsing(Dude)
 
 			if State == JMod.EZ_STATE_OFF and Alt then
 				self:Prime()
+				activator:DropObject()
 				activator:PickupObject(self.Plunger)
+				self.NextStick = Time + .5
 				JMod.Hint(Dude, "arm satchelcharge", self.Plunger)
 			else
+				constraint.RemoveConstraints(self, "Weld")
+				self.StuckStick = nil
+				self.StuckTo = nil
+				activator:DropObject()
 				activator:PickupObject(self)
+				self.NextStick = Time + .5
 				JMod.Hint(Dude, "arm")
 			end
+		else
+			if self:IsPlayerHolding() and (self.NextStick < Time) then
+				self:Plant(Dude)
+			end
+		end
+	end
+
+	function ENT:Plant(ply)
+		local Tr = util.QuickTrace(ply:GetShootPos(), ply:GetAimVector() * 100, {self, ply, self.Plunger})
+		local Time = CurTime()
+
+		if Tr.Hit and IsValid(Tr.Entity:GetPhysicsObject()) and not Tr.Entity:IsNPC() and not Tr.Entity:IsPlayer() then
+			self.NextStick = Time + .5
+
+			if table.HasValue(self.UsableMats, Tr.MatType) then
+				local Ang = Tr.HitNormal:Angle()
+				Ang:RotateAroundAxis(Ang:Right(), -90)
+				Ang:RotateAroundAxis(Ang:Up(), 180)
+				self:SetAngles(Ang)
+				self:SetPos(Tr.HitPos + Tr.HitNormal * 3)
+
+				local Fff = EffectData()
+				Fff:SetOrigin(Tr.HitPos)
+				Fff:SetNormal(Tr.HitNormal)
+				Fff:SetScale(1)
+				util.Effect("eff_jack_sminebury", Fff, true, true)
+			else
+				local Ang = Tr.HitNormal:Angle()
+				Ang:RotateAroundAxis(Ang:Up(), -90)
+				Ang:RotateAroundAxis(Ang:Right(), 90)
+				self:SetAngles(Ang)
+				self:SetPos(Tr.HitPos + Tr.HitNormal * 4)
+			end
+
+			-- crash prevention
+			if Tr.Entity:GetClass() == "func_breakable" then
+				timer.Simple(0, function()
+					self:GetPhysicsObject():Sleep()
+				end)
+			else
+				local Weld = constraint.Weld(self, Tr.Entity, 0, Tr.PhysicsBone, 3000, false, false)
+				self.StuckTo = Tr.Entity
+				self.StuckStick = Weld
+			end
+
+			self:EmitSound("snd_jack_claythunk.ogg", 65, math.random(80, 120))
+			ply:DropObject()
+			JMod.Hint(ply, "arm")
 		end
 	end
 
@@ -94,6 +158,7 @@ if SERVER then
 		if IsValid(self.Plunger) then
 			JMod.SetEZowner(self, self.Plunger.EZowner)
 		end
+		local Blaster = JMod.GetEZowner(self)
 
 		timer.Simple(0, function()
 			if IsValid(self) then
@@ -128,6 +193,36 @@ if SERVER then
 				JMod.WreckBuildings(self, SelfPos, PowerMult)
 				JMod.BlastDoors(self, SelfPos, PowerMult)
 
+				if self.StuckTo and self.StuckTo == game.GetWorld() then
+					-- Find what deposit we are over
+					local DepositKey = JMod.GetDepositAtPos(self, SelfPos, 1)
+
+					if DepositKey then
+						local DepositTable = JMod.NaturalResourceTable[DepositKey]
+						local AmountToBlast = math.min(math.random(math.floor(DepositTable.amt * .05), math.ceil(DepositTable.amt * .10)), 400)
+						local ChunkNumber = math.ceil(AmountToBlast/(25 * JMod.Config.ResourceEconomy.MaxResourceMult))
+
+						for i = 1, ChunkNumber do
+							timer.Simple(.1 * i, function()
+								local Ore = ents.Create(JMod.EZ_RESOURCE_ENTITIES[DepositTable.typ])
+								Ore:SetPos(SelfPos)
+								Ore:SetAngles(AngleRand())
+								Ore:Spawn()
+								JMod.SetEZowner(Ore, Blaster)
+								Ore:SetEZsupplies(DepositTable.typ, math.floor(AmountToBlast / ChunkNumber))
+								Ore:Activate()
+								timer.Simple(0, function()
+									if IsValid(Ore) and IsValid(Ore:GetPhysicsObject()) then
+										Ore:GetPhysicsObject():AddVelocity((vector_up + VectorRand() * .5) * 500)
+									end
+								end)
+							end)
+						end
+
+						JMod.DepleteNaturalResource(DepositKey, AmountToBlast)
+					end
+				end
+
 				timer.Simple(0, function()
 					local ZaWarudo = game.GetWorld()
 					local Infl, Att = (IsValid(self) and self) or ZaWarudo, (IsValid(self) and IsValid(self.EZowner) and self.EZowner) or (IsValid(self) and self) or ZaWarudo
@@ -148,18 +243,19 @@ elseif CLIENT then
 
 	function ENT:Draw()
 		self:DrawModel()
-		local State = self:GetState()
-		local pos = self:GetPos() + self:GetUp() * 2.8 + self:GetRight() * -2.6 + self:GetForward() * -3
+		--[[local State = self:GetState()
+		local pos = self:GetPos() + self:GetUp() * 3.5 + self:GetRight() * -2.5 + self:GetForward() * -4.5
+		local ViewDir = (LocalPlayer():GetShootPos() - pos):GetNormalized()
 
 		if State == JMod.EZ_STATE_ARMING then
 			render.SetMaterial(GlowSprite)
-			render.DrawSprite(pos, 10, 10, Color(255, 0, 0))
-			render.DrawSprite(pos, 5, 5, Color(255, 255, 255))
+			render.DrawSprite(pos + ViewDir, 10, 10, Color(255, 0, 0))
+			render.DrawSprite(pos + ViewDir, 5, 5, Color(255, 255, 255))
 		elseif State == JMod.EZ_STATE_ARMED then
 			render.SetMaterial(GlowSprite)
-			render.DrawSprite(pos, 5, 5, Color(255, 100, 0))
-			render.DrawSprite(pos, 2, 2, Color(255, 255, 255))
-		end
+			render.DrawSprite(pos + ViewDir, 5, 5, Color(255, 100, 0))
+			render.DrawSprite(pos + ViewDir, 2, 2, Color(255, 255, 255))
+		end--]]
 	end
 
 	language.Add("ent_jack_gmod_ezsatchelcharge", "EZ Satchel Charge")

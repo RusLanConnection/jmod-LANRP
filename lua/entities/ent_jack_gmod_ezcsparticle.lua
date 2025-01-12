@@ -27,11 +27,11 @@ if SERVER then
 	function ENT:DamageObj(obj)
 		local Time = CurTime()
 		if obj:IsPlayer() then
-			local faceProt, skinProt = JMod.GetArmorBiologicalResistance(obj, DMG_NERVEGAS)
-
-			JMod.DepleteArmorChemicalCharge(obj, (faceProt + skinProt) * 4 * .02)
-
-			if faceProt < 1 then
+			local inhaleProt, skinProt, eyeProt = JMod.GetArmorBiologicalResistance(obj, DMG_NERVEGAS)
+			
+			JMod.DepleteArmorChemicalCharge(obj, (inhaleProt) * .06)
+			
+			if eyeProt < 1 then
 				net.Start("JMod_VisionBlur")
 				net.WriteFloat(5 * math.Clamp(1 - faceProt, 0, 1))
 				net.WriteFloat(2)
@@ -39,19 +39,20 @@ if SERVER then
 				net.Send(obj)
 				JMod.Hint(obj, "tear gas")
 				JMod.TryCough(obj)
+				if math.random(1, 10) == 1 then
+					local Dmg = DamageInfo()
+					Dmg:SetDamageType(DMG_NERVEGAS)
+					Dmg:SetDamage(math.random(1, 2) * JMod.Config.Particles.PoisonGasDamage)
+					Dmg:SetInflictor(self)
+					Dmg:SetAttacker(JMod.GetEZowner(self))
+					Dmg:SetDamagePosition(obj:GetPos())
+					obj:TakeDamageInfo(Dmg)
+				end
+			else
+				obj.EZcoughTime = Time + .5
 			end
 		elseif obj:IsNPC() then
 			obj.EZNPCincapacitate = Time + math.Rand(2, 5)
-		end
-
-		if math.random(1, 20) == 1 then
-			local Dmg = DamageInfo()
-			Dmg:SetDamageType(DMG_NERVEGAS)
-			Dmg:SetDamage(math.random(1, 4) * JMod.Config.Particles.PoisonGasDamage)
-			Dmg:SetInflictor(self)
-			Dmg:SetAttacker(JMod.GetEZowner(self))
-			Dmg:SetDamagePosition(obj:GetPos())
-			obj:TakeDamageInfo(Dmg)
 		end
 	end
 
@@ -59,7 +60,7 @@ if SERVER then
 		local SelfPos, Time = self:GetPos(), CurTime()
 		local RandDir = VectorRand(-6, 6)
 		RandDir.z = RandDir.z * .5
-		local Force = RandDir + (JMod.Wind * 4) + Vector(0, 0, -8)
+		local Force = RandDir + (JMod.Wind * 4) + Vector(0, 0, -6)
 
 		for key, obj in pairs(ents.FindInSphere(SelfPos, self.AffectRange)) do
 			if math.random(1, 2) == 1 and not (obj == self) and self:CanSee(obj) then
@@ -94,7 +95,7 @@ if SERVER then
 		})
 		if not MoveTrace.Hit then
 			-- move unobstructed
-			self:SetPos(NewPos + MoveTrace.HitNormal * 1)
+			self:SetPos(NewPos)
 		else
 			-- bounce in accordance with Ideal Gas Law
 			self:SetPos(MoveTrace.HitPos + MoveTrace.HitNormal * 10)
@@ -125,6 +126,7 @@ elseif CLIENT then
 
 		self.NextVisCheck = CurTime() + 6
 		self.DebugShow = (LocalPlayer().EZshowGasParticles and Cheating:GetBool()) or false
+		self:SetRenderBounds(Vector(-250, -250, -250), Vector(250, 250, 250))
 	end
 
 	function ENT:DrawTranslucent()
@@ -145,9 +147,12 @@ elseif CLIENT then
 		if self.Show then
 			local SelfPos = self:GetPos()
 			render.SetMaterial(Mat)
-			render.DrawSprite(self.RenderPos, self.siz, self.siz, Color(self.Col.r, self.Col.g, self.Col.b, 15))
+			local EyeDiff = self.RenderPos - EyePos()
+			local RenderDist = (1 - 1 / EyeDiff:Length()) * 250
+			render.DrawSprite(self.RenderPos + EyeDiff:GetNormalized() * -RenderDist, self.siz, self.siz, Color(self.Col.r, self.Col.g, self.Col.b, 15))
+			--render.DrawSprite(self.RenderPos, self.siz, self.siz, Color(self.Col.r, self.Col.g, self.Col.b, 15))
 			self.RenderPos = LerpVector(FrameTime() * 1, self.RenderPos, SelfPos)
-			self.siz = math.Clamp(self.siz + FrameTime() * 200, 0, 500)
+			self.siz = math.Clamp(self.siz + FrameTime() * 150, 0, 500)
 		end
 	end
 end

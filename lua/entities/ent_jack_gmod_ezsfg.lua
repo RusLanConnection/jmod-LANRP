@@ -64,7 +64,7 @@ if(SERVER)then
 	function ENT:Use(activator)
 		if self.NextUseTime > CurTime() then return end
 		local State = self:GetState()
-		local Alt = activator:KeyDown(JMod.Config.General.AltFunctionKey)
+		local Alt = JMod.IsAltUsing(activator)
 		JMod.SetEZowner(self, activator)
 		JMod.Colorify(self)
 
@@ -385,11 +385,11 @@ elseif(CLIENT)then
 		local State, Grade = self:GetState(), self:GetGrade()
 		local FT = FrameTime()
 		if State == STATE_ON then
-			self.WheelMomentum = math.Clamp(self.WheelMomentum + FT / 8, 0, 1)
+			self.WheelMomentum = math.Clamp(self.WheelMomentum or 0 + FT / 8, 0, 1)
 		else
-			self.WheelMomentum = math.Clamp(self.WheelMomentum - FT / 2, 0, 1)
+			self.WheelMomentum = math.Clamp(self.WheelMomentum or 0 - FT / 2, 0, 1)
 		end
-		self.WheelTurn = self.WheelTurn - self.WheelMomentum*Grade*FT*300
+		self.WheelTurn = self.WheelTurn or 0 - self.WheelMomentum*Grade*FT*300
 
 		if self.WheelTurn > 360 then
 			self.WheelTurn = 1

@@ -66,6 +66,9 @@ if(SERVER)then
 			if not self.DepositKey then
 				JMod.Hint(JMod.GetEZowner(self), "ground drill")
 				self.EZstayOn = nil
+				if self:GetState() > STATE_OFF then
+					self:TurnOff()
+				end
 			elseif(GroundIsSolid)then
 				--
 				local HitAngle = Tr.HitNormal:Angle()
@@ -123,7 +126,7 @@ if(SERVER)then
 	function ENT:Use(activator)
 		local State = self:GetState()
 		local OldOwner = JMod.GetEZowner(self)
-		local alt = activator:KeyDown(JMod.Config.General.AltFunctionKey)
+		local alt = JMod.IsAltUsing(activator)
 		JMod.SetEZowner(self, activator, true)
 
 		if State == STATE_BROKEN then
@@ -186,8 +189,8 @@ if(SERVER)then
 			elseif State == STATE_RUNNING then
 				if not self.EZinstalled then self:TurnOff() return end
 
-				if not JMod.NaturalResourceTable[self.DepositKey] then 
-					self:TurnOff()
+				if not(JMod.NaturalResourceTable[self.DepositKey] and JMod.NaturalResourceTable[self.DepositKey].amt) then 
+					self:TryPlace()
 
 					return
 				end
@@ -209,7 +212,6 @@ if(SERVER)then
 				self:SetProgress(self:GetProgress() + drillRate)
 
 				if self:GetProgress() >= 100 then
-					local amtToDrill = math.min(JMod.NaturalResourceTable[self.DepositKey].amt, 100)
 					self:ProduceResource()
 				end
 
@@ -342,6 +344,7 @@ elseif(CLIENT)then
 	function ENT:Think()
 		local State, Grade, Typ, Prog = self:GetState(), self:GetGrade(), self:GetResourceType(), self:GetProgress()
 		local FT = FrameTime()
+		self.CurDepth = self.CurDepth or 0
 		if self.CurDepth - self:GetProgress() > 1 then
 			self.CurDepth = Lerp(math.ease.InOutExpo(FT * 15), self.CurDepth, self:GetProgress())
 		else

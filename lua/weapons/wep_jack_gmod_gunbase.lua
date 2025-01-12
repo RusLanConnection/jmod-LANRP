@@ -1,4 +1,4 @@
-﻿SWEP.Base = "arccw_base"
+SWEP.Base = "arccw_base"
 SWEP.Spawnable = false -- this obviously has to be set to true
 SWEP.Category = "JMod - EZ Weapons" -- edit this if you like
 SWEP.AdminOnly = false
@@ -232,6 +232,10 @@ SWEP.Hook_PostFireBullets = function(self)
 
 		JMod.RicPenBullet(self.Owner, RPos, RDir, self.RicPenShotData[1] or 10, self.RicPenShotData[2], self.RicPenShotData[3], 1, self.RicPenShotData[4] or 5, "eff_jack_gmod_smallarmstracer", self.RicPenShotCallback and self.RicPenShotCallback)
 	end
+
+	if self.DistantShootSound and SERVER then
+		self:MyEmitSound(self.DistantShootSound, 80, 100, 1, CHAN_WEAPON-1, true)
+	end
 end
 
 -- Behavior Modifications by Jackarunda --
@@ -272,19 +276,22 @@ local WDir, StabilityStamina, BreathStatus = VectorRand(), 100, false
 local function FocusIn(wep)
 	if not BreathStatus then
 		BreathStatus = true
-		surface.PlaySound("snds_jack_gmod/ez_weapons/focus_in.ogg")
+		if CLIENT then
+			surface.PlaySound("snds_jack_gmod/ez_weapons/focus_in.ogg")
+		end
 	end
 end
 
 local function FocusOut(wep)
 	if BreathStatus then
 		BreathStatus = false
-		surface.PlaySound("snds_jack_gmod/ez_weapons/focus_out.ogg")
+		if CLIENT then
+			surface.PlaySound("snds_jack_gmod/ez_weapons/focus_out.ogg")
+		end
 	end
 end
 
-hook.Add("CreateMove", "JMod_CreateMove", function(cmd)
-	local ply = LocalPlayer()
+hook.Add("StartCommand", "JMod_CreateMove", function(ply, cmd)
 	if not ply:Alive() then return end
 	local Wep = ply:GetActiveWeapon()
 
@@ -328,8 +335,8 @@ hook.Add("CreateMove", "JMod_CreateMove", function(cmd)
 		cmd:SetViewAngles(EAng)
 	end
 
-	if input.WasKeyPressed(KEY_BACKSPACE) then
-		if not (ply:IsTyping() or gui.IsConsoleVisible() or gui.IsGameUIVisible() or input.IsKeyDown(input.GetKeyCode(input.LookupBinding("+menu"))) or input.IsKeyDown(input.GetKeyCode(input.LookupBinding("+menu_context")))) then
+	if CLIENT and input.WasKeyPressed(KEY_BACKSPACE) then
+		if not (ply:IsTyping() or gui.IsConsoleVisible() or gui.IsGameUIVisible() or input.IsKeyDown(input.GetKeyCode(input.LookupBinding("+menu") or 0)) or input.IsKeyDown(input.GetKeyCode(input.LookupBinding("+menu_context") or 0))) then
 			local Time = CurTime()
 			if not(ply.NextDropTime) or ply.NextDropTime < Time then
 				RunConsoleCommand("jmod_ez_dropweapon")
@@ -552,30 +559,33 @@ function SWEP:OnDrop()
 	local Specs = JMod.WeaponTable[self.PrintName]
 
 	if Specs then
-		local Pos, Ang = self:GetPos(), self:GetAngles()
-		if IsValid(self.EZdropper) and self.EZdropper:IsPlayer() then
-			local AimPos, AimVec = self.EZdropper:GetShootPos(), self.EZdropper:GetAimVector()
-			local PlaceTr = util.QuickTrace(AimPos, AimVec * 60, {self, self.EZdropper})
-			Pos = PlaceTr.HitPos + PlaceTr.HitNormal * 5
-			--Ang = PlaceTr.HitNormal:Angle() --(PlaceTr.HitPos - AimPos):Angle()
-		end
+		timer.Simple(0.001, function()
+			if not IsValid(self) then return end
+			local Pos, Ang = self:GetPos(), self:GetAngles()
+			if IsValid(self.EZdropper) and self.EZdropper:IsPlayer() then
+				local AimPos, AimVec = self.EZdropper:GetShootPos(), self.EZdropper:GetAimVector()
+				local PlaceTr = util.QuickTrace(AimPos, AimVec * 60, {self, self.EZdropper})
+				Pos = PlaceTr.HitPos + PlaceTr.HitNormal * 5
+				--Ang = PlaceTr.HitNormal:Angle() --(PlaceTr.HitPos - AimPos):Angle()
+			end
 
-		local Ent = ents.Create(Specs.ent)
-		Ent:SetPos(Pos)
-		Ent:SetAngles(Ang)
-		Ent.MagRounds = self:Clip1()
-		if self:Clip2() > 0 then
-			Ent.MorRounds = self:Clip2()
-		end
-		Ent:Spawn()
-		Ent:Activate()
-		local Phys = Ent:GetPhysicsObject()
+			local Ent = ents.Create(Specs.ent)
+			Ent:SetPos(Pos)
+			Ent:SetAngles(Ang)
+			Ent.MagRounds = self:Clip1()
+			if self:Clip2() > 0 then
+				Ent.MorRounds = self:Clip2()
+			end
+			Ent:Spawn()
+			Ent:Activate()
+			local Phys = Ent:GetPhysicsObject()
 
-		if Phys and self and IsValid(Phys) and IsValid(self) and IsValid(self:GetPhysicsObject()) then
-			Phys:SetVelocity(self:GetPhysicsObject():GetVelocity() / 2)
-		end
+			if Phys and self and IsValid(Phys) and IsValid(self) and IsValid(self:GetPhysicsObject()) then
+				Phys:SetVelocity(self:GetPhysicsObject():GetVelocity() / 2)
+			end
 
-		self:Remove()
+			self:Remove()
+		end)
 	else
 		self.EZdropper = nil
 	end

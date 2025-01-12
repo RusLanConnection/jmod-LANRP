@@ -34,8 +34,8 @@ end
 function ENT:SetEZsupplies(typ, amt, setter)
 	if not SERVER then return end -- Important because this is shared as well
 	if typ ~= self.EZsupplies then return end -- Type doesn't matter because we only have one type, but we have it here because of uniformness
-	if amt < 1 then self:Remove() return end -- We be empty, therefore, useless
-	self:SetResource(math.max(amt, 1)) -- Otherwise, just set our resource to the new value
+	self:SetResource(amt) -- Set our resource to the new value
+	if amt < 1 then self:Remove() end -- We be empty, therefore, useless
 end
 
 ---
@@ -117,7 +117,7 @@ if SERVER then
 				if self.PhysMat then
 					Phys:SetMaterial(self.PhysMat)
 				end
-				Phys:SetMass(math.max(self.Mass))
+				Phys:SetMass(self.Mass or 30)
 				Phys:Wake()
 				if self.EZbuoyancy then
 					Phys:SetBuoyancyRatio(self.EZbuoyancy)
@@ -243,7 +243,7 @@ if SERVER then
 	end
 
 	function ENT:Use(activator)
-		local AltPressed, Count = activator:KeyDown(JMod.Config.General.AltFunctionKey), self:GetResource()
+		local AltPressed, Count = JMod.IsAltUsing(activator), self:GetResource()
 
 		if AltPressed and activator:KeyDown(IN_SPEED) and self:GetClass() ~= "ent_jack_gmod_ezsand" then
 			-- split resource entity in half
@@ -344,7 +344,7 @@ if SERVER then
 	end
 
 	function ENT:PostEntityPaste(ply, ent, createdEntities)
-		if (ent.AdminOnly and ent.AdminOnly == true) and not(JMod.IsAdmin(ply)) then
+		if not(ent:GetPersistent()) and (ent.AdminOnly and ent.AdminOnly == true) and not(JMod.IsAdmin(ply)) then
 			SafeRemoveEntity(ent)
 
 			return

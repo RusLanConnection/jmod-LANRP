@@ -37,13 +37,14 @@ SWEP.MuzzleEffect = "muzzleflash_g3"
 SWEP.ShellModel = "models/jhells/shell_762nato.mdl"
 SWEP.ShellPitch = 80
 SWEP.ShellScale = 2
+SWEP.ShellSounds = JMod.ShellSounds.metal
 SWEP.SpeedMult = 1
 SWEP.SightedSpeedMult = .65
 SWEP.SightTime = .6
 
 SWEP.IronSightStruct = {
-	Pos = Vector(-3.75, 0, .5),
-	Ang = Angle(-.1, 0, -5),
+	Pos = Vector(-4.6, 0, 2.5),
+	Ang = Angle(.5, 0, -5),
 	Magnification = 1.1,
 	SwitchToSound = JMod.GunHandlingSounds.aim.inn,
 	SwitchFromSound = JMod.GunHandlingSounds.aim.out
@@ -101,6 +102,7 @@ SWEP.Animations = {
 		Source = "shoot1",
 		Time = 1.1,
 		ShellEjectAt = .4,
+		TPAnim = ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2,
 		SoundTable = {
 			{
 				s = "snds_jack_gmod/ez_weapons/bar/lift.wav",

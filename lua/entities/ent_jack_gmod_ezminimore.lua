@@ -97,7 +97,7 @@ if SERVER then
 	function ENT:Use(activator)
 		local State = self:GetState()
 		if State < 0 then return end
-		local Alt = activator:KeyDown(JMod.Config.General.AltFunctionKey)
+		local Alt = JMod.IsAltUsing(activator)
 		JMod.SetEZowner(self, activator)
 		JMod.Colorify(self)
 
@@ -132,7 +132,7 @@ if SERVER then
 		JMod.Sploom(self.EZowner, SelfPos, math.random(10, 20))
 
 		if JMod.Config.Explosives.FragExplosions then
-			JMod.FragSplosion(self, SelfPos, 1000, 10, 5000, JMod.GetEZowner(self), Up, .9)
+			JMod.FragSplosion(self, SelfPos, 500, 25, 3000, JMod.GetEZowner(self), Up, .3, 5)
 		else
 			util.BlastDamage(self, JMod.GetEZowner(self), SelfPos + Up * 350, 350, 110)
 		end

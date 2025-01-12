@@ -13,6 +13,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 		Note = "radio packages must have all lower-case names, see http://wiki.garrysmod.com/page/Enums/IN for key numbers",
 		Info = {
 			Author = "Jackarunda & Friends",
+			Version = 50
 			Version = 49.6
 		},
 		General = {
@@ -1018,7 +1019,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					[JMod.EZ_RESOURCE_TYPES.STEEL] = 100,
 					[JMod.EZ_RESOURCE_TYPES.PLASTIC] = 100,
 					[JMod.EZ_RESOURCE_TYPES.RUBBER] = 100,
-					[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = 5,
+					[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = 15,
 					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 100
 				},
 				sizeScale = 4,
@@ -2243,7 +2244,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 			["EZ Bucket"] = {
 				results = "ent_jack_gmod_ezbucket",
 				craftingReqs = {
-					[JMod.EZ_RESOURCE_TYPES.STEEL] = 20
+					[JMod.EZ_RESOURCE_TYPES.ALUMINUM] = 10
 				},
 				category = "Tools",
 				craftingType = {"craftingtable", "workbench"},
@@ -2881,6 +2882,18 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				category = "Apparel",
 				craftingType = "workbench",
 				description = "Carry more items and resources to school."
+			},
+			["EZ Munition Backpack"] = {
+				results = JMod.ArmorTable["Munition Backpack"].ent,
+				craftingReqs = {
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 50,
+					[JMod.EZ_RESOURCE_TYPES.CLOTH] = 50,
+					[JMod.EZ_RESOURCE_TYPES.RUBBER] = 20,
+					[JMod.EZ_RESOURCE_TYPES.ADVANCEDTEXTILES] = 10
+				},
+				category = "Apparel",
+				craftingType = "workbench",
+				description = "Multiplies the amount of ammunition you can carry. Very useful for heavy weapons."
 			},
 			["EZ Pouches"] = {
 				results = JMod.ArmorTable["Pouches"].ent,
@@ -3737,7 +3750,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 	-- This is to make sure the ammo types are saved on config reload
 	JMod.LoadAmmoTable(JMod.AmmoTable)
 
-	print("JMOD: updating recipies...")
+	print("JMOD: updating recipes...")
 	for k, v in ents.Iterator() do
 		if(IsValid(v) and v.UpdateConfig)then
 			v:UpdateConfig()
@@ -3837,18 +3850,18 @@ end
 
 hook.Add("PersistenceSave", "JMOD_SaveDepositConfig", function(persistenceString)
 	if not persistenceString then return end
-	JMod.SaveDepositConfig("Persistant" .. persistenceString)
+	JMod.SaveDepositConfig("Persistant_" .. persistenceString)
 end)
 
 hook.Add("PersistenceLoad", "JMOD_LoadDepositConfig", function(persistenceString)
 	if not persistenceString then return end
-	local Info = JMod.LoadDepositConfig("Persistant" .. persistenceString)
+	local Info = JMod.LoadDepositConfig("Persistant_" .. persistenceString)
 
 	if type(Info) == "string" then
 		print(Info)
 		return
 	else
-		if SERVER and GetConVar("sv_cheats"):GetBool() == true then
+		if SERVER then
 			JMod.NaturalResourceTable = Info
 			net.Start("JMod_NaturalResources")
 				net.WriteBool(false)

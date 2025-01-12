@@ -88,6 +88,24 @@ if SERVER then
 					end)
 				end
 			end
+			--[[local Class = ent:GetClass()
+			local Vol = (self.Items[Class] and self.Items[Class][2]) or math.ceil(ent:GetPhysicsObject():GetVolume() / JMod.VOLUMEDIV)
+
+			if ent.EZstorageVolumeOverride then
+				Vol = ent.EZstorageVolumeOverride
+			end
+
+			if ent.JModEZstorable and ent:IsPlayerHolding() and (not ent.GetState or ent:GetState() == 0) and self:GetItemCount() + Vol <= self.MaxItems then
+				self.NextLoad = CurTime() + 0.5
+
+				self.Items[Class] = {(self.Items[Class] and self.Items[Class][1] or 0) + 1, Vol}
+
+				self:SetItemCount(self:GetItemCount() + Vol)
+
+				timer.Simple(0, function()
+					SafeRemoveEntity(ent)
+				end)
+			end--]]
 		end
 	end
 
@@ -116,11 +134,7 @@ if SERVER then
 	function ENT:Use(activator)
 		self:CalcWeight()
 		--if self:GetItemCount() <= 0 then return end
-		net.Start("JMod_ItemInventory")
-		net.WriteEntity(self)
-		net.WriteString("open_menu")
-		net.WriteTable(self.JModInv)
-		net.Send(activator)
+		JMod.OpenEntityInventory(self, activator)
 	end
 
 	function ENT:Think()
@@ -131,7 +145,7 @@ if SERVER then
 	end
 
 	function ENT:PostEntityPaste(ply, ent, createdEntities)
-		if (ent.AdminOnly and ent.AdminOnly == true) and not(JMod.IsAdmin(ply)) then
+		if not(ent:GetPersistent()) and (ent.AdminOnly and ent.AdminOnly == true) and not(JMod.IsAdmin(ply)) then
 			SafeRemoveEntity(ent)
 		end
 		ent.NextLoad = 0

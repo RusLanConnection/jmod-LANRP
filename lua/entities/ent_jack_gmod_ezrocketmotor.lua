@@ -122,7 +122,7 @@ if SERVER then
 		if tobool(onOff) then
 			local State = self:GetState()
 			if State < 0 then return end
-			local Alt = Dude:KeyDown(JMod.Config.General.AltFunctionKey)
+			local Alt = JMod.IsAltUsing(Dude)
 
 			if State == STATE_OFF then
 				if Alt then
@@ -259,7 +259,7 @@ if SERVER then
 						Phys:ApplyForceOffset(self:GetUp() * self.ThrustPower, self:GetPos() + self:GetUp() * 10)
 					end
 				end
-				self.FuelLeft = self.FuelLeft - 1.75
+				self.FuelLeft = self.FuelLeft - 2
 				--jprint(1 / self.FuelLeft)
 				---
 				local Eff = EffectData()

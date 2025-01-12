@@ -1,18 +1,35 @@
 
-function JMod.FragSplosion(shooter, origin, fragNum, fragDmg, fragMaxDist, attacker, direction, spread, zReduction)
+function JMod.FragSplosion(shooter, origin, fragNum, fragDmg, fragMaxDist, attacker, direction, spread, zReduction, doEffect)
 	-- fragmentation/shrapnel simulation
-	local Eff = EffectData()
-	Eff:SetOrigin(origin)
-	Eff:SetScale(fragNum)
-	Eff:SetNormal(direction or Vector(0, 0, 0))
-	Eff:SetMagnitude(spread or 0)
-	util.Effect("eff_jack_gmod_fragsplosion", Eff, true, true)
-	---
-	shooter = shooter or game.GetWorld()
+	shooter = (IsValid(shooter) and shooter) or game.GetWorld()
 	zReduction = zReduction or 2
+	doEffect = true
+
+	local ShrapnelDamageInfo = nil
+	local PreSetupDamageInfo = false
+	if type(fragDmg) ~= "number" then
+		ShrapnelDamageInfo = fragDmg
+		fragDmg = ShrapnelDamageInfo:GetDamage()
+		PreSetupDamageInfo = true
+		if IsValid(shooter) then
+			ShrapnelDamageInfo:SetInflictor(shooter)
+		end
+		if IsValid(attacker) then
+			ShrapnelDamageInfo:SetAttacker(attacker)
+		end
+	else
+		ShrapnelDamageInfo = DamageInfo()
+		ShrapnelDamageInfo:SetAttacker(attacker)
+		ShrapnelDamageInfo:SetInflictor(shooter)
+		ShrapnelDamageInfo:SetDamageType(DMG_BUCKSHOT)
+	end
 
 	if not JMod.Config.Explosives.FragExplosions then
-		util.BlastDamage(shooter, attacker, origin, fragMaxDist * .25, fragDmg)
+		if PreSetupDamageInfo then
+			util.BlastDamageInfo(ShrapnelDamageInfo, origin, fragMaxDist * .30)
+		else
+			util.BlastDamage(shooter, attacker, origin, fragMaxDist * .30, fragDmg)
+		end
 
 		return
 	end
@@ -26,8 +43,12 @@ function JMod.FragSplosion(shooter, origin, fragNum, fragDmg, fragMaxDist, attac
 		end
 	end
 
-	local Spred = Vector(0, 0, 0)
-	local BulletsFired, MaxBullets, disperseTime = 0, 300, .5
+	local Dir = Vector(0, 0, 1)
+	if direction then
+		Dir = Vector(direction.x, direction.y, direction.z)
+	end
+
+	local BulletsFired, MaxBullets, disperseTime = 0, fragNum / 10, .5
 
 	if fragNum >= 12000 then
 		disperseTime = 2
@@ -35,14 +56,20 @@ function JMod.FragSplosion(shooter, origin, fragNum, fragDmg, fragMaxDist, attac
 		disperseTime = 1
 	end
 
+	local DirAng = Dir:Angle()
+	DirAng:RotateAroundAxis(DirAng:Forward(), math.random(-180, 180))
+	local FragAng = DirAng:GetCopy()
+
+	local MaxAngle = 180
+	local AngleFraction = MaxAngle / fragNum
+
 	for i = 1, fragNum do
 		timer.Simple((i / fragNum) * disperseTime, function()
-			local Dir
 
 			if direction and spread then
-				Dir = Vector(direction.x, direction.y, direction.z)
-				Dir = Dir + VectorRand() * math.Rand(0, spread)
-				Dir:Normalize()
+				FragAng:RotateAroundAxis(FragAng:Up(), AngleFraction * spread)
+				FragAng:RotateAroundAxis(DirAng:Forward(), i)
+				Dir = FragAng:Forward()
 			else
 				Dir = VectorRand()
 			end
@@ -54,7 +81,7 @@ function JMod.FragSplosion(shooter, origin, fragNum, fragDmg, fragMaxDist, attac
 
 			local Tr = util.QuickTrace(origin, Dir * fragMaxDist / WaterDivider, shooter)
 
-			if Tr.Hit and not Tr.HitSky and not Tr.HitWorld and (BulletsFired < MaxBullets) then
+			if (BulletsFired < MaxBullets) and Tr.Hit and not Tr.HitSky and not Tr.HitWorld then
 				debugoverlay.Line(origin, Tr.HitPos, 5, Color(255, 0, 0), true)
 				local DmgMul = 1 / WaterDivider
 
@@ -63,25 +90,19 @@ function JMod.FragSplosion(shooter, origin, fragNum, fragDmg, fragMaxDist, attac
 				end
 
 				if IsValid(Tr.Entity:GetPhysicsObject()) and (Tr.Entity:GetPhysicsObject():GetMass() > 300) then
-					DmgMul = 1 / fragDmg
+					DmgMul = math.Round(1 / fragDmg, 4)
 				end
 
-				local firer = (IsValid(shooter) and shooter) or game.GetWorld()
-
-				local DistFactor = (-Tr.Fraction + 1.2)^2
-				local DamageToDeal = fragDmg * DmgMul * DistFactor
+				local DistFactor = (-Tr.Fraction + 1.1)^2.5
+				local DamageToDeal = math.min(math.Round(fragDmg * DmgMul * DistFactor, 2), fragDmg * DmgMul)
 				if DamageToDeal >= 1 then
-					firer:FireBullets({
-						Attacker = attacker,
-						Damage = DamageToDeal,
-						Force = DamageToDeal * .02,
-						Num = 1,
-						Src = origin,
-						Tracer = 0,
-						Dir = Dir,
-						Spread = Spred,
-						AmmoType = "Buckshot" -- for identification as "fragments"
-					})
+					-- Convert the distance from source hammer units to meters
+					local DistanceConversion = math.Round(Tr.StartPos:Distance(Tr.HitPos) / 52.493, 2)
+					--print("Damage to deal: " .. DamageToDeal, "Meters: " .. DistanceConversion, "Target: " .. tostring(Tr.Entity))
+					ShrapnelDamageInfo:SetDamage(DamageToDeal)
+					ShrapnelDamageInfo:SetDamagePosition(Tr.HitPos)
+					ShrapnelDamageInfo:SetDamageForce(Dir * DamageToDeal * .5)
+					Tr.Entity:DispatchTraceAttack(ShrapnelDamageInfo, Tr, Dir)
 				end
 
 				BulletsFired = BulletsFired + 1
@@ -89,6 +110,14 @@ function JMod.FragSplosion(shooter, origin, fragNum, fragDmg, fragMaxDist, attac
 				debugoverlay.Line(origin, Tr.HitPos, 2, Color(217, 255, 0), true)
 			end
 		end)
+	end
+	if doEffect then
+		local Eff = EffectData()
+		Eff:SetOrigin(origin)
+		Eff:SetScale(fragNum)
+		Eff:SetNormal(direction or Vector(0, 0, 0))
+		Eff:SetMagnitude(spread or 0)
+		util.Effect("eff_jack_gmod_fragsplosion", Eff, true, true)
 	end
 end
 
@@ -187,7 +216,7 @@ function JMod.WreckBuildings(blaster, pos, power, range, ignoreVisChecks)
 
 				if proceed then
 					if mass <= myDestroyThreshold then
-						if (DistFrac >= .9) and string.find(physObj:GetMaterial(), "metal") then
+						if (mass * 2 >= myDestroyThreshold) and (DistFrac >= .9) and string.find(physObj:GetMaterial(), "metal") then
 							timer.Simple(.1, function()
 								JMod.FragSplosion(blaster, propPos, mass * 10, 100, maxRange * 100, game.GetWorld(), (propPos - pos):GetNormalized(), DistFrac)
 							end)
@@ -203,6 +232,9 @@ function JMod.WreckBuildings(blaster, pos, power, range, ignoreVisChecks)
 				end
 			end
 		end
+		--if prop:GetClass() == "npc_strider" then
+			--prop:Fire("break")
+		--end
 	end
 end
 
@@ -222,6 +254,60 @@ function JMod.BlastDoors(blaster, pos, power, range, ignoreVisChecks)
 		end
 		if door:GetClass() == "func_breakable_surf" then
 			door:Fire("Break")
+		end
+	end
+end
+
+function JMod.FireSplosion(pos, vel, amt, spreadMult, speed, quickTrace, blaster, attacker)
+	if not(pos) then return end
+	if not(amt) or (amt < 1) then return end
+	vel = vel or Vector(0, 0, 0)
+	local dir = vel:GetNormalized()
+	amt = math.Round(amt)
+	spreadMult = spreadMult or 1
+
+	local attacker = (IsValid(attacker) and attacker) or JMod.GetEZowner(blaster)
+
+	for i = 1, amt do
+		local DoNapalm = true
+		if quickTrace then 
+			local tr = util.QuickTrace(pos, dir + VectorRand() * 20 * spreadMult, blaster)
+			if tr.Hit then
+				local Haz = ents.Create("ent_jack_gmod_ezfirehazard")
+				Haz:SetDTInt(0, 1)
+				Haz:SetPos(tr.HitPos + tr.HitNormal * 2)
+				Haz:SetAngles(tr.HitNormal:Angle())
+				JMod.SetEZowner(Haz, JMod.GetEZowner(attacker))
+				Haz.HighVisuals = math.random(1, amt) >= amt * .75
+				Haz.Burnin = true
+				Haz:Spawn()
+				Haz:Activate()
+				
+				if IsValid(tr.Entity) and tr.Entity:IsWorld() then
+					Haz:SetParent(tr.Entity)
+				end
+
+				DoNapalm = false
+			end
+		end
+		if DoNapalm then
+			timer.Simple(i / (amt + amt * .2), function()
+				local FireVec = (dir + VectorRand() * spreadMult + Vector(0, 0, .3)):GetNormalized()
+				--FireVec.z = FireVec.z / 2
+				local Flame = ents.Create("ent_jack_gmod_eznapalm")
+				Flame:SetPos(pos)
+				Flame:SetAngles(FireVec:Angle())
+				if IsValid(blaster) then
+					Flame:SetOwner(blaster)
+					JMod.SetEZowner(Flame, IsValid(attacker) and attacker or blaster)
+				end
+				Flame.SpeedMul = .5
+				Flame.InitialVel = FireVec + vel
+				Flame.Creator = attacker
+				Flame.HighVisuals = math.random(1, amt) >= amt / 2
+				Flame:Spawn()
+				Flame:Activate()
+			end)
 		end
 	end
 end
@@ -328,7 +414,7 @@ local SurfaceHardness = {
 function JMod.RicPenBullet(ent, pos, dir, dmg, doBlasts, wreckShit, num, penMul, tracerName, callback)
 	if not IsValid(ent) then return end
 	if num and num > 10 then return end
-	local Attacker = ent.EZowner or ent or game.GetWorld()
+	local Attacker = JMod.GetEZowner(ent)
 
 	ent:FireBullets({
 		Attacker = Attacker,
@@ -489,38 +575,5 @@ function JMod.EnergeticsCookoff(pos, attacker, powerMult, numExplo, numBullet, n
 			})
 		end)
 	end
-	for i = 1, numFire do
-		local tr = util.QuickTrace(pos, VectorRand() * powerMult * 20, attacker)
-		if tr.Hit then
-			local Haz = ents.Create("ent_jack_gmod_ezfirehazard")
-
-			if IsValid(Haz) then
-				Haz:SetDTInt(0, 1)
-				Haz:SetPos(tr.HitPos + tr.HitNormal * 2)
-				Haz:SetAngles(tr.HitNormal:Angle())
-				JMod.SetEZowner(Haz, JMod.GetEZowner(attacker))
-				Haz.HighVisuals = true
-				Haz.Burnin = true
-				Haz:Spawn()
-				Haz:Activate()
-				
-				if IsValid(tr.Entity) and tr.Entity:IsWorld() then
-					Haz:SetParent(tr.Entity)
-				end
-			end
-		else
-			local FireVec = (VectorRand() * powerMult + Vector(0, 0, .3)):GetNormalized()
-			FireVec.z = FireVec.z / 2
-			local Flame = ents.Create("ent_jack_gmod_eznapalm")
-			Flame:SetPos(pos + VectorRand() * 10)
-			Flame:SetAngles(FireVec:Angle())
-			Flame:SetOwner(JMod.GetEZowner(attacker))
-			JMod.SetEZowner(Flame, attacker.EZowner or attacker)
-			Flame.SpeedMul = (powerMult / 4)
-			Flame.Creator = attacker
-			Flame.HighVisuals = math.random(1, numFire) >= numFire / 2
-			Flame:Spawn()
-			Flame:Activate()
-		end
-	end
+	JMod.FireSplosion(pos, Vector(0, 0, 0), numFire, powerMult, 1, true, nil, attacker)
 end

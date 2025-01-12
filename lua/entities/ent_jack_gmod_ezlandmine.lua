@@ -83,7 +83,7 @@ if SERVER then
 	function ENT:PhysicsCollide(data, physobj)
 		if data.DeltaTime > 0.2 then
 			if data.Speed > 25 then
-				if (self:GetState() == STATE_ARMED) and (math.random(1, 5) == 3) then
+				if (self:GetState() == STATE_ARMED) and (IsValid(data.HitEntity) and JMod.ShouldAttack(self, data.HitEntity)) then
 					self:Detonate()
 				else
 					self:EmitSound("Weapon.ImpactHard")
@@ -112,7 +112,7 @@ if SERVER then
 		local State = self:GetState()
 		if State < 0 then return end
 		self.AutoArm = false
-		local Alt = activator:KeyDown(JMod.Config.General.AltFunctionKey)
+		local Alt = JMod.IsAltUsing(activator)
 
 		if State == STATE_OFF then
 			if Alt then
@@ -163,8 +163,8 @@ if SERVER then
 		util.Effect("eff_jack_minesplode", plooie, true, true)
 		util.ScreenShake(SelfPos, 99999, 99999, 1, 500)
 		self:EmitSound("snd_jack_fragsplodeclose.ogg", 90, 100)
-		JMod.Sploom(Owner, SelfPos, math.random(10, 20))
-		JMod.FragSplosion(self, SelfPos + Up * 5, 1000, 25 * JMod.Config.Explosives.Mine.Power, 3000, Owner, Up, 1.2, 3)
+		JMod.Sploom(Owner, SelfPos, math.random(15, 20) * JMod.Config.Explosives.Mine.Power)
+		JMod.FragSplosion(self, SelfPos + Up * 5, 1200, 30 * JMod.Config.Explosives.Mine.Power, 2000, Owner, Up, .75, 10)
 		self:Remove()
 	end
 

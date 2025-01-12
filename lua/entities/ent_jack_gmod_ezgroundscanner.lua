@@ -47,10 +47,6 @@ end
 
 if(SERVER)then
 	function ENT:CustomInit()
-		self:SetAngles(Angle(-90,0,0))
-		---
-		self.EZupgradable=true
-		---
 		self:SetProgress(0)
 		self.Snd1=CreateSound(self,"snds_jack_gmod/40hz_sine1.wav")
 		self.Snd2=CreateSound(self,"snds_jack_gmod/40hz_sine1.wav")

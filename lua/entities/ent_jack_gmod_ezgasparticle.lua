@@ -79,7 +79,7 @@ if SERVER then
 			start = self:GetPos(),
 			endpos = ent:GetPos(),
 			filter = {self, ent, self.Canister},
-			mask = MASK_SHOT
+			mask = MASK_SHOT+MASK_WATER
 		})
 		return not Tr.Hit
 	end
@@ -143,8 +143,13 @@ if SERVER then
 				start = SelfPos,
 				endpos = NewPos,
 				filter = { self, self.Canister },
-				mask = MASK_SHOT
+				mask = MASK_SHOT+MASK_WATER
 			})
+			if MoveTrace.StartSolid or (bit.band(util.PointContents(MoveTrace.HitPos), CONTENTS_WATER) == CONTENTS_WATER) then
+				SafeRemoveEntity(self)
+
+				return
+			end
 			if not MoveTrace.Hit then
 				if MoveTrace.HitSky then
 					SafeRemoveEntity(self)
@@ -163,7 +168,7 @@ if SERVER then
 			end
 		end
 
-		debugoverlay.Line(OldPos, self:GetPos(), 2, Color(0, 89, 255), true)
+		--debugoverlay.Line(OldPos, self:GetPos(), 2, Color(0, 89, 255), true)
 
 		-- self:Extinguish()
 
@@ -193,7 +198,7 @@ elseif CLIENT then
 	local Cheating = GetConVar("sv_cheats")
 
 	function ENT:Initialize()
-		self.Col = Color(math.random(100, 255), math.random(100, 255), math.random(100, 255))
+		self.Col = Color(math.random(120, 120), math.random(120, 150), 75)
 		self.Visible = true
 		self.Show = true
 		self.siz = math.random(50, 150)
@@ -227,7 +232,7 @@ elseif CLIENT then
 		if self.Show then
 			local SelfPos = self:GetPos()
 			render.SetMaterial(Mat)
-			render.DrawSprite(self.LastPos, self.siz, self.siz, Color(self.Col.r, self.Col.g, self.Col.b, 10))
+			render.DrawSprite(self.LastPos, self.siz, self.siz, Color(self.Col.r, self.Col.g, self.Col.b, 25))
 			self.LastPos = LerpVector(FrameTime() * 1, self.LastPos, self:GetPos())
 		end
 	end

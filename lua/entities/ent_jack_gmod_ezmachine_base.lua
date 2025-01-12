@@ -328,16 +328,18 @@ if(SERVER)then
 	end
 
 	function ENT:ModConnections(dude)
-		if not(IsValid(dude) and dude:IsPlayer()) then return end
 		local Connections = {}
-		if self.EZconnections then
-			for entID, cable in pairs(self.EZconnections) do
-				local ConnectedEnt = Entity(entID)
-				if IsValid(ConnectedEnt) then
-					table.insert(Connections, {DisplayName = ConnectedEnt.PrintName, Index = entID})
-				end
+		for _, cable in pairs(constraint.FindConstraints(self, "JModResourceCable")) do
+			if (cable.Ent1 == self) and JMod.ConnectionValid(self, cable.Ent2) then
+				table.insert(Connections, {DisplayName = cable.Ent2.PrintName, Index = cable.Ent2:EntIndex()})
+			elseif JMod.ConnectionValid(self, cable.Ent1) then
+				table.insert(Connections, {DisplayName = cable.Ent1.PrintName, Index = cable.Ent1:EntIndex()})
+			else
+				JMod.RemoveResourceConnection(self, cable.Ent1)
 			end
 		end
+
+		if not(IsValid(dude) and dude:IsPlayer()) then return end
 		net.Start("JMod_ModifyConnections")
 			net.WriteEntity(self)
 			net.WriteTable(Connections)
@@ -401,17 +403,9 @@ if(SERVER)then
 			end
 			self.Pod:Fire("lock","",0)
 		end
-		if self.EZconnections then
-			for entID, cable in ipairs(self.EZconnections) do
-				JMod.RemoveConnection(self, entID)
-			end
-		end
 
-		JMod.SetEZowner(ent, nil)
-		self:SetOwner(nil)
+		constraint.RemoveConstraints(self, "JModResourceCable")
 
-		self:SetColor(Color(255, 255, 255))
-		
 		if(self.OnBreak)then self:OnBreak() end
 	end
 
@@ -464,7 +458,7 @@ if(SERVER)then
 	end
 
 	function ENT:TryLoadResource(typ, amt)
-		if(amt <= 0)then return 0 end
+		if (amt <= 0) then return 0 end
 		local Time = CurTime()
 		if self.NextRefillTime == nil or (self.NextRefillTime > Time) or (typ == "generic") then return 0 end
 		for _,v in pairs(self.EZconsumes)do
@@ -623,102 +617,80 @@ if(SERVER)then
 		return 0
 	end
 
-	function ENT:LoadFromDonor(typ, amt)
-		local SelfPos = self:GetPos()
-		if IsValid(self.PerferredDonor) and (self.PerferredDonor:GetPos():Distance(SelfPos) <= 100) then
-			local Supplies = self.PerferredDonor:GetEZsupplies(typ)
-			if (Supplies) and (Supplies > 0) then
-				local Required = math.min(Supplies, amt)
-				local Accepted = self:TryLoadResource(typ, Required)
-				self.PerferredDonor:SetEZsupplies(typ, Supplies - Required, self)
-				JMod.ResourceEffect(typ, self.PerferredDonor:LocalToWorld(self.PerferredDonor:OBBCenter()), self:LocalToWorld(self:OBBCenter()), amt/200, 1, 1)
-
-				return Accepted
-			end
-		end
-		for _, v in ipairs(ents.FindInSphere(SelfPos, 100)) do
-			if v.GetEZsupplies then
-				local Supplies = v:GetEZsupplies(typ)
-				if Supplies and Supplies > 0 then
-					local Required = math.min(Supplies, amt)
-					local Accepted = self:TryLoadResource(typ, Required)
-					v:SetEZsupplies(typ, Supplies - Required, self)
-					self.PerferredDonor = v
-
-					return Accepted
+	--[[function ENT:OnEntityCopyTableFinish(tbl)
+		if self.EZconnections then
+			for k, v in pairs(self.EZconnections) do
+				if JMod.ConnectionValid(self, Entity(k)) then
+					tbl.EZconnections[k] = NULL -- It's gonna be null on the other end anyway
 				end
 			end
+			--tbl.EZconnections = table.FullCopy(self.EZconnections)
+			print("Copying EZ connections", self)
+			--PrintTable(self.EZconnections)
+			PrintTable(tbl.EZconnections)
 		end
-
-		return 0
-	end
+	end--]]
 
 	-- Entity save/dupe functionality
 	function ENT:PostEntityPaste(ply, ent, createdEntities)
 		local Time = CurTime()
-		if (ent.AdminOnly and ent.AdminOnly == true) and (not(JMod.IsAdmin(ply)) and not(ent:GetPersistent())) then
-			SafeRemoveEntity(ent)
-		else
-			if IsValid(ply) then
-				JMod.SetEZowner(self, ply, true)
-			elseif self.EZownerID then
-				JMod.SetEZowner(self, player.GetBySteamID64(self.EZownerID), true)
-			end
-			ent.NextRefillTime = Time + 1
-			if ent.NextUseTime then
-				ent.NextUseTime = Time + 1
-			end
-			if ent.SoundLoop then
-				self.SoundLoop:Stop()
-				self.SoundLoop = nil
-			end
-			if ent.OnPostEntityPaste then
-				ent:OnPostEntityPaste(ply, ent, createdEntities)
-			end
-			if not(JMod.IsAdmin(ply)) and not(ent:GetPersistent()) then
-				if ent.EZconsumes and not(JMod.Config.Machines.SpawnMachinesFull) then
-					for _, typ in ipairs(ent.EZconsumes) do
-						if istable(ent.FlexFuels) and table.HasValue(ent.FlexFuels, typ) then
-							ent:SetElectricity(0)
-						else
-							if JMod.EZ_RESOURCE_TYPE_METHODS[typ] then
-								local ResourceSetMethod = ent["Set"..JMod.EZ_RESOURCE_TYPE_METHODS[typ]]
-								if ResourceSetMethod then
-									ResourceSetMethod(ent, 0)
-								end
+		if not(self:GetPersistent()) and (self.AdminOnly) and (not(JMod.IsAdmin(ply)) and not(self:GetPersistent())) then
+			SafeRemoveEntity(self)
+
+			return
+		end
+
+		if IsValid(ply) then
+			JMod.SetEZowner(self, ply, true)
+		elseif self.EZownerID then
+			JMod.SetEZowner(self, player.GetBySteamID64(self.EZownerID), true)
+		end
+
+		self.NextRefillTime = 0
+
+		if self.NextUseTime then
+			self.NextUseTime = Time + 1
+		end
+
+		if self.SoundLoop then
+			self.SoundLoop:Stop()
+			self.SoundLoop = nil
+		end
+
+		if not(JMod.IsAdmin(ply)) and not(self:GetPersistent()) then
+			if self.EZconsumes and not(JMod.Config.Machines.SpawnMachinesFull) then
+				for _, typ in ipairs(self.EZconsumes) do
+					if istable(self.FlexFuels) and table.HasValue(self.FlexFuels, typ) then
+						self:SetElectricity(0)
+					else
+						if JMod.EZ_RESOURCE_TYPE_METHODS[typ] then
+							local ResourceSetMethod = self["Set"..JMod.EZ_RESOURCE_TYPE_METHODS[typ]]
+							if ResourceSetMethod then
+								ResourceSetMethod(self, 0)
 							end
 						end
 					end
 				end
-				if ent.SetProgress then
-					ent:SetProgress(0)
-				end
-				if ent.EZupgradable then
-					ent:SetGrade(JMod.EZ_GRADE_BASIC)
-					ent:InitPerfSpecs()
-				end
 			end
-			if ent.EZconnections then
-				timer.Simple(0, function()
-					if not IsValid(ent) then return end
-					--print("Machine with connection: "..tostring(ent))
-					for entID, cable in pairs(ent.EZconnections) do
-						--print("Original ID for connection: "..tostring(entID), "| Cable: "..tostring(cable), "| New entity: "..tostring(createdEntities[entID]))
-						if createdEntities[entID] then
-							local ConnectedEnt = createdEntities[entID]
-							if IsValid(ConnectedEnt) then
-								local CableConnection = constraint.FindConstraintEntity(ent, "Rope")
-								--print(ConnectedEnt, CableConnection)
-								if IsValid(CableConnection) then
-									ent.EZconnections[ConnectedEnt:EntIndex()] = CableConnection
-									ConnectedEnt.EZconnections[ent:EntIndex()] = CableConnection
-									break
-								end
-							end
-						end
-					end
-				end)
+			if self.SetProgress then
+				self:SetProgress(0)
 			end
+			if self.EZupgradable then
+				self:SetGrade(JMod.EZ_GRADE_BASIC)
+				self:InitPerfSpecs()
+			end
+		end
+
+		timer.Simple(0, function()
+			self:ModConnections()
+		end)
+
+		if self.EZconnections then
+			self.EZconnections = nil -- Down with the old system
+		end
+		
+		if self.OnPostEntityPaste then
+			self:OnPostEntityPaste(ply, self, createdEntities)
 		end
 	end
 

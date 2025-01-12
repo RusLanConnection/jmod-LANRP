@@ -131,7 +131,7 @@ if SERVER then
 	function ENT:Use(activator)
 		local State = self:GetState()
 		if State < 0 then return end
-		local Alt = activator:KeyDown(JMod.Config.General.AltFunctionKey)
+		local Alt = JMod.IsAltUsing(activator)
 
 		if State == JMod.EZ_STATE_OFF then
 			if Alt then
@@ -192,7 +192,7 @@ if SERVER then
 		util.ScreenShake(SelfPos, 99999, 99999, 1, 500)
 		self:EmitSound("snd_jack_fragsplodeclose.ogg", 90, 100)
 		JMod.Sploom(self.EZowner, SelfPos, math.random(10, 20))
-		JMod.FragSplosion(self, SelfPos, 3000, 50, 5000, JMod.GetEZowner(self), nil, nil, 10)
+		JMod.FragSplosion(self, SelfPos, 3000, 50 * JMod.Config.Explosives.Mine.Power, 3000, JMod.GetEZowner(self), nil, nil, 10)
 		self:Remove()
 	end
 

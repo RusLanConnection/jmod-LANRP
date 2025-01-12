@@ -41,7 +41,8 @@ list.Set("ContentCategoryIcons", "JMod - LEGACY Misc.", JModLegacyIcon )
 list.Set("ContentCategoryIcons", "JMod - LEGACY NPCs", JModLegacyIcon )
 list.Set("ContentCategoryIcons", "JMod - LEGACY Weapons", JModLegacyIcon )
 
-local BlurryMenus = CreateClientConVar("jmod_enable_blurry_menus", "1", true)
+local BlurryMenus = CreateClientConVar("jmod_cl_blurry_menus", "1", true, true, "Enables blurry menus, not for potatoes", 0, 1)
+local SortEnabled = CreateClientConVar("jmod_cl_sort_enabled", "1", true, true, "Sorts enabled menu buttons to the top of the list", 0, 1)
 local blurMat = Material("pp/blurscreen")
 local Dynamic = 0
 local function BlurBackground(panel)
@@ -453,8 +454,10 @@ local function PopulateItems(parent, items, typ, motherFrame, entity, enableFunc
 	Scroll:SetPos(10, 10)
 	---
 	local Pos, Range = entity:GetPos(), 150
-	local Y, AlphabetizedItemNames = 0, table.GetKeys(items)
+	local AlphabetizedItemNames = table.GetKeys(items)
 	table.sort(AlphabetizedItemNames, function(a, b) return a < b end)
+
+	local EnabledY, Y = 0, 0
 
 	for k, itemName in pairs(AlphabetizedItemNames) do
 		local Butt = Scroll:Add("DButton")
@@ -473,9 +476,18 @@ local function PopulateItems(parent, items, typ, motherFrame, entity, enableFunc
 		end
 
 		Butt:SetTooltip(desc)
-		Butt.enabled = enableFunc(itemName, itemInfo, LocalPlayer(), entity)
 		Butt:SetMouseInputEnabled(true)
 		Butt.hovered = false
+		Butt.enabled = enableFunc(itemName, itemInfo, LocalPlayer(), entity)
+		if SortEnabled:GetBool() and Butt.enabled then
+			Butt:SetPos(0, EnabledY)
+			EnabledY = EnabledY + 47
+			for _, button in pairs(Scroll:GetCanvas():GetChildren()) do
+				if not button.enabled then
+					button:SetY(button:GetY() + 47)
+				end
+			end
+		end
 
 		function Butt:Paint(w, h)
 			local Hovr = self:IsHovered()
@@ -784,20 +796,20 @@ net.Receive("JMod_EZtoolbox", function()
 		return JMod.HaveResourcesToPerformTask(ent:GetPos(), 150, info.craftingReqs, ent, LocallyAvailableResources) 
 	end, 
 	function(name, info, ply, ent)-- click func
-		net.Start("JMod_EZtoolbox")
-		net.WriteEntity(ent)
-		net.WriteString(name)
-		net.SendToServer()
 
 		-- wireframe preview
 		ent.EZpreview = {}
-		local StringParts = string.Explode(" ", info["results"])																	  
+		local StringParts = string.Explode(" ", info["results"])	
+		local Ang = nil 
+		if info.spawnRotation then
+			Ang = Angle(0, info.spawnRotation, 0)
+		end															  
 		if StringParts[1] and (StringParts[1] == "FUNC") then
-			if info.sizeScale then
-				local ScaledMinMax = Vector(info.sizeScale * 10, info.sizeScale * 10, info.sizeScale * 10)
-				ent.EZpreview = {Box = {mins = -ScaledMinMax, maxs = ScaledMinMax}, SizeScale = info.sizeScale}
+			if not info.sizeScale or (StringParts[2] == "EZnail") or (StringParts[2] == "EZbolt") then
+				ent.EZpreview = {Box = nil, sizeScale = 1, SpawnAngles = Ang or Angle(0, 0, 0)} --No way to tell size
 			else
-				ent.EZpreview = {Box = nil} --No way to tell size
+				local ScaledMinMax = Vector(info.sizeScale * 10, info.sizeScale * 10, info.sizeScale * 10)
+				ent.EZpreview = {Box = {mins = -ScaledMinMax, maxs = ScaledMinMax}, sizeScale = info.sizeScale, SpawnAngles = Ang or Angle(0, 0, 0)}
 			end
 		else
 			local temp_ent
@@ -818,8 +830,8 @@ net.Receive("JMod_EZtoolbox", function()
 			temp_ent:SetNoDraw(true)
 			temp_ent:Spawn()									-- have to do this to get an accurate bounding box
 			local Min, Max = temp_ent:OBBMaxs(), temp_ent:OBBMins() 		-- couldn't find a better way
-			local Ang = temp_ent.JModPreferredCarryAngles and temp_ent.JModPreferredCarryAngles
-			
+			Ang = Ang or (temp_ent.JModPreferredCarryAngles and temp_ent.JModPreferredCarryAngles)
+
 			if Min:IsZero() and Max:IsZero() then
 				if info.sizeScale then
 					local ScaledMinMax = Vector(info.sizeScale * 10, info.sizeScale * 10, info.sizeScale * 10)
@@ -829,10 +841,18 @@ net.Receive("JMod_EZtoolbox", function()
 					Min, Max = temp_ent.Mdl:GetModelBounds()
 				end
 			end
+			local OriginDiff = temp_ent:LocalToWorld(temp_ent:OBBCenter()) - temp_ent:GetPos()
+			Min = Min - OriginDiff
+			Max = Max - OriginDiff
 			SafeRemoveEntityDelayed(temp_ent, 0)
 
-			ent.EZpreview = {Box = {mins = Min, maxs = Max}, SizeScale = info.sizeScale and info.sizeScale, SpawnAngles = Ang and Ang}
+			ent.EZpreview = {Box = {mins = Min, maxs = Max}, sizeScale = info.sizeScale and info.sizeScale, SpawnAngles = Ang or Angle(0, 0, 0)}
 		end
+		net.Start("JMod_EZtoolbox")
+			net.WriteEntity(ent)
+			net.WriteString(name)
+			net.WriteTable(ent.EZpreview)
+		net.SendToServer()
 	end, 
 	function(parent) -- side panel func
 		local W, H, Myself = parent:GetWide(), parent:GetTall(), LocalPlayer()
@@ -847,44 +867,22 @@ net.Receive("JMod_EZtoolbox", function()
 		ResourceScroller.HorizontalScrollbar = false
 
 		for k, v in pairs(LocallyAvailableResources) do
-			local ResourcePanel = vgui.Create("DPanel", ResourceScroller)
-			ResourcePanel:SetSize(W - 20, 40)
-			ResourcePanel:Dock(TOP)
-			ResourcePanel:DockMargin(0, 0, 0, 5)
-			function ResourcePanel:Paint(w, h)
-				surface.SetDrawColor(0, 0, 0, 50)
-				surface.DrawRect(0, 0, w, h)
-				JMod.StandardResourceDisplay(k, v, nil, w * .55, h * .5, 30, false, "JMod-Stencil-XS")
+			if v > 0 then
+				local ResourcePanel = vgui.Create("DPanel", ResourceScroller)
+				ResourcePanel:SetSize(W - 20, 40)
+				ResourcePanel:Dock(TOP)
+				ResourcePanel:DockMargin(0, 0, 0, 5)
+				function ResourcePanel:Paint(w, h)
+					surface.SetDrawColor(0, 0, 0, 50)
+					surface.DrawRect(0, 0, w, h)
+					JMod.StandardResourceDisplay(k, v, nil, w * .55, h * .5, 30, false, "JMod-Stencil-XS")
+				end
+				ResourcePanel:SetTooltip(k .. " x" .. v)
 			end
-			ResourcePanel:SetTooltip(k .. " x" .. v)
 		end
 	end)
-
-	--[[local W, H, Myself = MotherFrame:GetWide(), MotherFrame:GetTall(), LocalPlayer()
-	MotherFrame:SetTall(550)
-
-	local ToolPanel = vgui.Create("DPanel", MotherFrame)
-	ToolPanel:SetPos(10, 495)
-	ToolPanel:SetSize(W - 20, 45)
-	function ToolPanel:Paint(w, h)
-		surface.SetDrawColor(0, 0, 0, 50)
-		surface.DrawRect(0, 0, w, h)
-	end
-
-	local PickButton = vgui.Create("DButton", ToolPanel)
-	PickButton:SetPos(5, 5)
-	PickButton:SetSize(100, 35)
-	PickButton:SetText("")
-	function PickButton:Paint(x, y)
-		local Hovr = self:IsHovered()
-		local Col = (Hovr and 80) or 20
-		surface.SetDrawColor(0, 0, 0, Col)
-		surface.DrawRect(0, 0, x, y)
-		draw.SimpleText("PICKAXE", "DermaDefault", x * 0.5, y * 0.5, Color(255, 255, 255, Col * 2), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-	end--]]
 end)
 
--- no side display for now
 net.Receive("JMod_EZworkbench", function()
 	local Bench = net.ReadEntity()
 	local Buildables = net.ReadTable()
@@ -900,7 +898,56 @@ net.Receive("JMod_EZworkbench", function()
 		net.WriteEntity(ent)
 		net.WriteString(name)
 		net.SendToServer()
-	end, nil, Multiplier)
+	end, 
+	function(parent) -- side panel func
+		local W, H, Myself = parent:GetWide(), parent:GetTall(), LocalPlayer()
+
+		local ResourceScroller = vgui.Create("DScrollPanel", parent)
+		ResourceScroller:SetSize(W - 20, H - 20)
+		ResourceScroller:SetPos(10, 10)
+		ResourceScroller:DockMargin(0, 5, 0, 0)
+		ResourceScroller:Dock(FILL)
+		ResourceScroller:SetPaintBackground(false)
+		ResourceScroller.VerticalScrollbar = true
+		ResourceScroller.HorizontalScrollbar = false
+
+		for k, v in pairs(LocallyAvailableResources) do
+			if v > 0 then
+				local ResourcePanel = vgui.Create("DPanel", ResourceScroller)
+				ResourcePanel:SetSize(W - 20, 40)
+				ResourcePanel:Dock(TOP)
+				ResourcePanel:DockMargin(0, 0, 0, 5)
+				function ResourcePanel:Paint(w, h)
+					surface.SetDrawColor(0, 0, 0, 50)
+					surface.DrawRect(0, 0, w, h)
+					JMod.StandardResourceDisplay(k, v, nil, w * .55, h * .5, 30, false, "JMod-Stencil-XS")
+				end
+				ResourcePanel:SetTooltip(k .. " x" .. v)
+			end
+		end
+
+		if Bench:GetClass() == "ent_jack_gmod_ezprimitivebench" then
+			local ScrapButton = vgui.Create("DButton", parent)
+			ScrapButton:SetText("")
+			ScrapButton:SetSize(W - 20, 40)
+			ScrapButton:SetPos(10, H - 30)
+			ScrapButton:DockMargin(1, 5, 1, 5)
+			ScrapButton:Dock(BOTTOM)
+			ScrapButton.DoClick = function()
+				net.Start("JMod_EZworkbench")
+					net.WriteEntity(Bench)
+					net.WriteString("JMOD_SCRAPINV")
+				net.SendToServer()
+				parent:GetParent():Close()
+			end
+			ScrapButton:SetTooltip("Salvages the props in your Inventory")
+			function ScrapButton:Paint(w, h)
+				surface.SetDrawColor(0, 0, 0, 50)
+				surface.DrawRect(0, 0, w, h)
+				draw.SimpleText("SALVAGE INVENTORY PROPS", "JMod-Stencil-XS", w * .5, h * .5, TextColors.ButtonTextBright, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			end
+		end
+	end, Multiplier)
 end)
 
 net.Receive("JMod_EZtimeBomb", function()
@@ -1144,6 +1191,8 @@ net.Receive("JMod_EZradio", function()
 		local msg = net.ReadString()
 		local radio = net.ReadEntity()
 		local ply = net.ReadEntity()
+
+		if not IsValid(radio) then return end
 
 		local tbl = {radio:GetColor(), "Aid Radio", Color(255, 255, 255), ": ", msg}
 
@@ -1457,7 +1506,21 @@ end
 
 --Item Inventory
 local function CreateInvButton(parent, itemTable, x, y, w, h, scrollFrame, invEnt)
-	if not(itemTable and IsValid(itemTable.ent)) then return end
+	if not(itemTable and IsValid(itemTable.ent)) then
+		print(invEnt)
+		net.Start("JMod_ItemInventory")
+			net.WriteString("missing")
+			net.WriteEntity(NULL)
+			net.WriteEntity(invEnt)
+		net.SendToServer()
+
+		if IsValid(parent) then
+			parent:Close()
+		end
+
+		return
+	end
+
 	local Buttalony, Ply = vgui.Create("DButton", scrollFrame), LocalPlayer()
 	local Matty = nil
 	if string.find(itemTable.ent:GetClass(), "prop_") then
@@ -1487,7 +1550,7 @@ local function CreateInvButton(parent, itemTable, x, y, w, h, scrollFrame, invEn
 		--draw.SimpleText(itemTable.name, "DermaDefault", Buttalony:GetWide() / 2, 40, TextColors.ButtonText, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	end
 
-	local HelpStr = itemTable.name
+	local HelpStr = itemTable.name..":\n"..(itemTable.vol or "N/A").." Volume"
 	
 	Buttalony:SetTooltip(HelpStr)
 	
@@ -1509,6 +1572,7 @@ local function CreateInvButton(parent, itemTable, x, y, w, h, scrollFrame, invEn
 					else
 						net.Start("JMod_ItemInventory")
 							net.WriteString("missing")
+							net.WriteEntity(NULL)
 							net.WriteEntity(invEnt)
 						net.SendToServer()
 					end
@@ -1526,6 +1590,7 @@ local function CreateInvButton(parent, itemTable, x, y, w, h, scrollFrame, invEn
 					else
 						net.Start("JMod_ItemInventory")
 							net.WriteString("missing")
+							net.WriteEntity(NULL)
 							net.WriteEntity(Ply)
 						net.SendToServer()
 					end
@@ -1540,6 +1605,8 @@ local function CreateInvButton(parent, itemTable, x, y, w, h, scrollFrame, invEn
 					net.WriteEntity(itemTable.ent)
 					if invEnt ~= Ply then
 						net.WriteEntity(invEnt)
+					else
+						net.WriteEntity(NULL)
 					end
 					net.SendToServer()
 				end
@@ -1754,7 +1821,9 @@ local JModInventoryMenu = function(PlyModel, itemTable)
 		PlyModel = Ply:GetModel()
 	end--]]
 	local weight = (Ply.EZarmor) and (Ply.EZarmor.totalWeight) or 0
-	Ply.JModInv = itemTable
+	if itemTable then
+		Ply.JModInv = itemTable
+	end
 
 	if IsValid(CurrentSelectionMenu) then return end
 
@@ -1803,6 +1872,7 @@ local JModInventoryMenu = function(PlyModel, itemTable)
 	PDispBT:SetPos(200, 30)
 	PDispBT:SetSize(200, 360)
 	PDispBT:SetText("")
+	PDispBT:SetTooltip("You can drag the model to rotate it.")
 
 	function PDispBT:Paint(w, h)
 		surface.SetDrawColor(0, 0, 0, 0)
@@ -1948,6 +2018,14 @@ local JModInventoryMenu = function(PlyModel, itemTable)
 	return motherFrame
 end
 
+list.Set("DesktopWindows", "JMod Inventory Button", {
+	title = "JMod Inventory",
+	icon = JModIcon..".png",
+	init = function( icon, window )
+		LocalPlayer():ConCommand("jmod_ez_inv")
+	end
+})
+
 net.Receive("JMod_ItemInventory", function(len, sender) -- for when we pick up stuff with JMOD HANDS
 	local invEnt = net.ReadEntity()
 	local command = net.ReadString()
@@ -1958,7 +2036,7 @@ net.Receive("JMod_ItemInventory", function(len, sender) -- for when we pick up s
 		invEnt = Ply
 	end
 
-	if newInv and istable(newInv) then
+	if newInv and istable(newInv) and next(newInv) then
 		invEnt.JModInv = newInv
 	end
 
@@ -1967,7 +2045,7 @@ net.Receive("JMod_ItemInventory", function(len, sender) -- for when we pick up s
 	if command == "open_menu" then
 		if IsValid(CurrentSelectionMenu) then return end
 		local frame = vgui.Create("DFrame")
-		frame:SetSize(210, 312)
+		frame:SetSize(210, 315)
 		frame:SetTitle((invEnt.PrintName or invEnt:GetClass() or "Player"))
 		frame:Center()
 		frame:MakePopup()
@@ -1986,7 +2064,7 @@ net.Receive("JMod_ItemInventory", function(len, sender) -- for when we pick up s
 
 		function frame:UpdateItemInventory(invEnt, newInv)
 			local scrollPanel = vgui.Create("DScrollPanel", self)
-			scrollPanel:SetSize(200, 370)
+			scrollPanel:SetSize(200, 270)
 			scrollPanel:SetPos(5, 30)
 			
 			local ShownItems = 0
@@ -2030,13 +2108,14 @@ net.Receive("JMod_ItemInventory", function(len, sender) -- for when we pick up s
 			BlurBackground(self)
 		end
 
+		local MaxAmt = invEnt:GetEZsupplies(invEnt.EZsupplies)
 		local amtSlide = vgui.Create("DNumSlider", ResourceGrabFrame)
 		amtSlide:SetText(string.upper(invEnt.EZsupplies))
 		amtSlide:SetSize(280, 20)
 		amtSlide:SetPos((ResourceGrabFrame:GetWide() - amtSlide:GetWide()) / 2, 30)
 		amtSlide:SetMin(0)
-		amtSlide:SetMax(invEnt:GetEZsupplies(invEnt.EZsupplies))
-		amtSlide:SetValue(((JMod.Config.ResourceEconomy and JMod.Config.ResourceEconomy.MaxResourceMult) or 1) * 100)
+		amtSlide:SetMax(MaxAmt)
+		amtSlide:SetValue(math.min(((JMod.Config.ResourceEconomy and JMod.Config.ResourceEconomy.MaxResourceMult) or 1) * 100), MaxAmt)
 		amtSlide:SetDecimals(0)
 		
 		local tek = vgui.Create("DButton", ResourceGrabFrame)
@@ -2045,7 +2124,7 @@ net.Receive("JMod_ItemInventory", function(len, sender) -- for when we pick up s
 		tek:SetText("TAKE")
 
 		function tek:DoClick()
-			Ply:ConCommand("jmod_ez_grab " .. tostring(invEnt:EntIndex()) .. " " .. amtSlide:GetValue())
+			Ply:ConCommand("jmod_ez_grab " .. tostring(invEnt:EntIndex()) .. " " .. tostring(amtSlide:GetValue()))
 			ResourceGrabFrame:Close()
 		end
 
@@ -2060,11 +2139,17 @@ net.Receive("JMod_Inventory", function()
 	JModInventoryMenu(net.ReadString(), net.ReadTable())
 end)
 
+local MachineStatus = {
+	[-1] = {"BROKEN", "icon16/bullet_red.png"},
+	[0] = {"OFFLINE", "icon16/bullet_black.png"},
+	[1] = {"ONLINE", "icon16/bullet_green.png"}
+}
+
 net.Receive("JMod_ModifyConnections", function()
 	local Ent = net.ReadEntity()
 	local Connections = net.ReadTable()
 	local Frame = vgui.Create("DFrame")
-	Frame:SetTitle("Modify Connections")
+	Frame:SetTitle("Modify Connections ["..Ent:EntIndex().."]")
 	Frame:SetSize(300, 400)
 	Frame:Center()
 	Frame:MakePopup()
@@ -2078,13 +2163,23 @@ net.Receive("JMod_ModifyConnections", function()
 	List:SetMultiSelect(false)
 	List:AddColumn("Machine")
 	List:AddColumn("EntID")
+	List:AddColumn("Status")
 
 	for _, connection in ipairs(Connections) do
 		local Line = List:AddLine(connection.DisplayName, connection.Index)
-		--local DisconnectIcon = vgui.Create("DImage", Line)
-		--DisconnectIcon:SetImage("icon16/disconnect.png")
-		--DisconnectIcon:SetSize(16, 16)
-		--DisconnectIcon:Dock(RIGHT)
+		local Machine = Entity(connection.Index)
+		if IsValid(Machine) then
+			local StatusIcon = vgui.Create("DImage", Line)
+			if Machine.GetState then
+				local State = math.Clamp(Machine:GetState(), -1, 1)
+				StatusIcon:SetImage(MachineStatus[State][2])
+				Line:SetColumnText(3, MachineStatus[State][1])
+			else
+				StatusIcon:SetImage("icon16/bullet_black.png")
+			end
+			StatusIcon:SetSize(16, 16)
+			StatusIcon:Dock(RIGHT)
+		end
 	end
 
 	local ButtonOptions = {
@@ -2092,7 +2187,7 @@ net.Receive("JMod_ModifyConnections", function()
 		{Text = "Disconnect", Func = "disconnect", Icon = "icon16/disconnect.png"},
 		{Text = "Disconnect All", Func = "disconnect_all", Icon = "icon16/disconnect.png"},
 		{Text = "Produce Resource", Func = "produce", Icon = "icon16/brick_add.png"},
-		{Text = "Toggle Machine", Func = "toggle", Icon = "icon16/brick.png"}
+		{Text = "Toggle Machine", Func = "toggle", Icon = "icon16/application_lightning.png"}
 	}
 
 	List.OnRowSelected = function(panel, rowIndex, row)
@@ -2102,8 +2197,8 @@ net.Receive("JMod_ModifyConnections", function()
 		DropDown:SetX(List:GetX() + List:GetWide() - DropDown:GetWide() - 8)
 		DropDown:SetY(List:GetY() + 15 + (rowIndex * 17))
 		for k, v in ipairs(ButtonOptions) do
-			if (v.Func ~= "connect") and (v.Func ~= "disconnect_all") then
-				DropDown:AddOption(v.Text, function()
+			if (v.Func ~= "connect") and (v.Func ~= "disconnect_all") and not (((v.Func == "toggle") or (v.Func == "produce")) and List:GetLine(rowIndex):GetValue(3) == "BROKEN") then
+				local Option = DropDown:AddOption(v.Text, function()
 					net.Start("JMod_ModifyConnections")
 						net.WriteEntity(Ent)
 						net.WriteString(v.Func)
@@ -2111,12 +2206,17 @@ net.Receive("JMod_ModifyConnections", function()
 					net.SendToServer()
 					Frame:Close()
 				end)
+				Option:SetIcon(v.Icon)
 			end
 		end
 	end
 
+	--[[List.Paint = function(x, y)
+		draw.RoundedBox(0, 0, 0, x:GetWide(), x:GetTall(), Color(10, 10, 10, 100))
+	end--]]
+
 	for k, v in ipairs(ButtonOptions) do
-		if (v.Func ~= "disconnect") and (v.Func ~= "toggle") then
+		if (v.Func ~= "disconnect") then
 			local SelectButton = vgui.Create("DButton", Frame)
 			SelectButton:SetText(v.Text)
 			SelectButton:SetHeight(22)
@@ -2134,6 +2234,9 @@ net.Receive("JMod_ModifyConnections", function()
 			Icon:SetImage(v.Icon)
 			Icon:SetSize(16, 16)
 			Icon:Dock(RIGHT)
+			--[[SelectButton.Paint = function(x, y)
+				draw.RoundedBox(0, 0, 0, x:GetWide(), x:GetTall(), Color(10, 10, 10, 100))
+			end--]]
 		end
 	end
 end)

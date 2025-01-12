@@ -155,10 +155,10 @@ if SERVER then
 	function ENT:LoadRocket(rocket)
 		if not (IsValid(rocket) and rocket:IsPlayerHolding() or JMod.Config.ResourceEconomy.ForceLoadAllResources) then return end
 		if rocket.AlreadyLoaded then return end
-		rocket.AlreadyLoaded = true
 		local RoomLeft = 6 - #self.Rockets
 
 		if RoomLeft > 0 then
+			rocket.AlreadyLoaded = true
 			table.insert(self.Rockets, rocket:GetClass())
 
 			self:EmitSound("snd_jack_metallicload.ogg", 65, 90)
@@ -263,7 +263,11 @@ if SERVER then
 
 	function ENT:Use(activator)
 		JMod.Hint(activator, "rocket pod")
-		self:LaunchRocket(#self.Rockets, false)
+		if JMod.IsAltUsing(activator) then
+			self:LaunchRocket(#self.Rockets, true, activator)
+		else
+			self:LaunchRocket(#self.Rockets, false)
+		end
 	end
 
 	function ENT:PreEntityCopy()

@@ -98,7 +98,7 @@ if SERVER then
 	function ENT:Use(activator)
 		local State = self:GetState()
 		if State < 0 then return end
-		local Alt = activator:KeyDown(JMod.Config.General.AltFunctionKey)
+		local Alt = JMod.IsAltUsing(activator)
 
 		if State == STATE_OFF then
 			if Alt then
@@ -178,7 +178,7 @@ if SERVER then
 			end
 		end)
 		local Up = self:GetUp()
-		JMod.FragSplosion(self, SelfPos + Up * 5, 10000, 200, 1500, JMod.GetEZowner(self), Up, 1.2)
+		JMod.FragSplosion(self, SelfPos + Up * 5, 5000, 250, 1500, JMod.GetEZowner(self), Up, .6, 5)
 		---
 		self:Remove()
 

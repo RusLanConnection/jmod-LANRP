@@ -619,6 +619,7 @@ end
 local TriggerKeys = {IN_ATTACK, IN_USE, IN_ATTACK2}
 
 function JMod.ThrowablePickup(playa, item, hardstr, softstr)
+	playa:DropObject()
 	playa:PickupObject(item)
 	local HookName = "EZthrowable_" .. item:EntIndex()
 
@@ -1054,6 +1055,8 @@ function JMod.EZprogressTask(ent, pos, deconstructor, task, mult)
 				return "you cannot salvage this "
 			elseif (constraint.HasConstraints(ent) or not Phys:IsMotionEnabled() and not FrozenProps[ent]) and not ConstrBLackList[ent:GetClass()] then
 				return "object is constrained"
+			if constraint.HasConstraints(ent) or not Phys:IsMotionEnabled() then
+				return "object must be loosened first"
 			else
 				local Mass = (Phys:GetMass() * ent:GetPhysicsObjectCount()) ^ .8
 				ent:ForcePlayerDrop()
@@ -1135,7 +1138,7 @@ hook.Add("JMod_ConsumeNutrients", "DarkRP_EnergyCompat", function(ply, amt)
 end)
 
 function JMod.GetPlayerStrength(ply)
-	if not(IsValid(ply) and ply:IsPlayer() and ply:Alive()) then return 0 end
+	if not(IsValid(ply) and ply:IsPlayer() and ply:Alive()) then return 1 end
 	local PlyHealth = ply:Health()
 	local PlyMaxHealth = ply:GetMaxHealth()
 
@@ -1143,25 +1146,7 @@ function JMod.GetPlayerStrength(ply)
 	return 1 + (math.max(PlyHealth - PlyMaxHealth, 0) ^ 1.2 / (PlyMaxHealth)) * JMod.Config.General.HandGrabStrength
 end
 
-function JMod.BuildEffect(pos)
-	local Scale = .5
-	local effectdata = EffectData()
-	effectdata:SetOrigin(pos + VectorRand())
-	effectdata:SetNormal((VectorRand() + Vector(0, 0, 1)):GetNormalized())
-	effectdata:SetMagnitude(math.Rand(1, 2) * Scale) --amount and shoot hardness
-	effectdata:SetScale(math.Rand(.5, 1.5) * Scale) --length of strands
-	effectdata:SetRadius(math.Rand(2, 4) * Scale) --thickness of strands
-	util.Effect("Sparks", effectdata,true,true)
-	sound.Play("snds_jack_gmod/ez_tools/hit.ogg", pos + VectorRand(), 60, math.random(80, 120))
-	sound.Play("snds_jack_gmod/ez_tools/"..math.random(1, 27)..".ogg", pos, 60, math.random(80, 120))
-	local eff = EffectData()
-	eff:SetOrigin(pos + VectorRand())
-	eff:SetScale(Scale)
-	util.Effect("eff_jack_gmod_ezbuildsmoke", eff, true, true)
-	-- todo: useEffects
-end
-
-function JMod.DebugArrangeEveryone(ply)
+function JMod.DebugArrangeEveryone(ply, mult)
 	local Origin, Dist, Ang = ply:GetPos(), 50, Angle(0, 0, 0)
 	local Beings = player.GetAll()
 	table.Add(Beings, ents.FindByClass("npc_*"))
@@ -1170,8 +1155,9 @@ function JMod.DebugArrangeEveryone(ply)
 			local Target = Origin + Ang:Forward() * Dist
 			local Tr = util.QuickTrace(Target + Vector(0, 0, 300), Vector(0, 0, -600), playa)
 			playa:SetPos(Tr.HitPos)
+			playa:SetHealth(playa:GetMaxHealth())
 			Ang:RotateAroundAxis(vector_up, 25)
-			Dist = Dist + 120
+			Dist = Dist + 120 * mult
 		end
 	end
 	ply:SetPos(Origin + Vector(0, 0, 200))

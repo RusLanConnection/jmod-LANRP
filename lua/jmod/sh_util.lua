@@ -173,11 +173,13 @@ function JMod.VisCheck(pos, target, sourceEnt)
 		pos = sourceEnt:GetOwner():EyePos()
 	end
 
-	if sourceEnt then
+	if IsValid(sourceEnt) then
+		pos = pos or sourceEnt:LocalToWorld(sourceEnt:OBBCenter())
 		table.insert(filter, sourceEnt)
+		if IsValid(sourceEnt:GetOwner()) then table.insert(filter, sourceEnt:GetOwner()) end
 	end
 
-	if target and target.GetPos then
+	if IsValid(target) and target.GetPos then
 		if target:GetNoDraw() then return false end
 		--table.insert(filter, target)
 		target = target:LocalToWorld(target:OBBCenter())
@@ -208,7 +210,7 @@ function JMod.CountResourcesInRange(pos, range, sourceEnt, cache)
 	--debugoverlay.Cross(pos, 10, 2, Color(255, 255, 255), true)
 
 	for k, obj in pairs(ents.FindInSphere(pos, range or 150)) do
-		if obj.GetEZsupplies and JMod.VisCheck(pos, obj, sourceEnt) then
+		if obj.GetEZsupplies then
 			local Supplies = obj:GetEZsupplies()
 			for k, v in pairs(Supplies) do
 				if k ~= "generic" then 
@@ -216,7 +218,7 @@ function JMod.CountResourcesInRange(pos, range, sourceEnt, cache)
 				end
 			end
 		end 
-		if obj.JModInv and JMod.VisCheck(pos, obj, sourceEnt) then
+		if obj.JModInv then
 			local Supplies = obj.JModInv.EZresources or {}
 			for k, v in pairs(Supplies) do
 				if k ~= "generic" then 
@@ -271,6 +273,7 @@ function JMod.ConsumeResourcesInRange(requirements, pos, range, sourceEnt, useRe
 		if TypesNeeded and (#TypesNeeded > 0) then
 			local ResourceTypeToLookFor = TypesNeeded[1]
 			local AmountWeNeed = math.ceil(RequirementsRemaining[ResourceTypeToLookFor] * mult)
+			
 			if propsToConsume then
 				for entID, yield in pairs(propsToConsume) do
 					local HasWhatWeNeed = false
@@ -284,19 +287,23 @@ function JMod.ConsumeResourcesInRange(requirements, pos, range, sourceEnt, useRe
 						end
 					end
 					local Ent = Entity(entID)
-					if Ent.JModInv then
+					--[[if Ent.JModInv then
 						for _, v in ipairs(Ent.JModInv.items) do
 							JMod.RemoveFromInventory(Ent, v.ent, pos + VectorRand() * 50)
 						end
-					end
+					end--]]
 					--print(Entity(entID), HasWhatWeNeed)
 					if HasWhatWeNeed then
 						SafeRemoveEntity(Ent) -- R.I.P. Props
 					end
 				end
+
+				if not AllDone then
+					propsToConsume = nil
+				end
 			else
 				local Donor = JMod.FindResourceContainer(ResourceTypeToLookFor, 1, pos, range, sourceEnt) -- every little bit helps
-				if Donor then
+				if IsValid(Donor) then
 					local AmountToTake = 0
 					if Donor.JModInv then
 						local AmountWeCanTake = Donor.JModInv.EZresources[ResourceTypeToLookFor]
@@ -341,30 +348,41 @@ function JMod.FindResourceContainer(typ, amt, pos, range, sourceEnt)
 			if obj.GetEZsupplies then
 				local AvailableResources = obj:GetEZsupplies(typ)
 				if AvailableResources and (AvailableResources >= amt) then
-					if JMod.VisCheck(pos, obj, sourceEnt) then
+					--if JMod.VisCheck(pos, obj, sourceEnt) then
 
 						return obj
-					end
+					--end
 				end
 			elseif obj.JModInv then
 				local AvailableResources = obj.JModInv.EZresources[typ]
 				if AvailableResources and (AvailableResources >= amt) then
-					if JMod.VisCheck(pos, obj, sourceEnt) then
+					--if JMod.VisCheck(pos, obj, sourceEnt) then
 
 						return obj
-					end
+					--end
 				end
 			end
 		end
 	end
-	if ValidSource and sourceEnt.GetEZsupplies then
-		local AvailableResources = sourceEnt:GetEZsupplies(typ)
-		if AvailableResources then
-			if (typ and AvailableResources >= amt) then
+	-- We do this so that the search algorithm prefers other containers before the source
+	if ValidSource then
+		if sourceEnt.GetEZsupplies then
+			local AvailableResources = sourceEnt:GetEZsupplies(typ)
+			if AvailableResources then
+				if (typ and AvailableResources >= amt) then
 
-				return sourceEnt
+					return sourceEnt
+				end
 			end
-		end
+		elseif sourceEnt.JModInv then
+			local AvailableResources = sourceEnt.JModInv.EZresources[typ]
+			if AvailableResources then
+				if (typ and AvailableResources >= amt) then
+
+					return sourceEnt
+				end
+			end
+		end 
 	end
 end
 
@@ -481,4 +499,10 @@ function JMod.GetHoliday()
 		NextCheck = Time + 360 -- only check once every hour
 	end
 	return CachedHoliday
+end
+
+function JMod.IsAltUsing(ply)
+	if ply.EZaltUse ~= nil then return ply.EZaltUse end
+	if ply.KeyDown then return ply:KeyDown(JMod.Config.General.AltFunctionKey) end
+	return false
 end

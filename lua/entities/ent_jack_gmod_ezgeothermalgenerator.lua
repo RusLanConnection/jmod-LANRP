@@ -13,6 +13,7 @@ ENT.JModPreferredCarryAngles = Angle(0, 0, 0)
 ENT.SpawnHeight = 52
 ENT.Mass = 8000
 ENT.EZanchorage = 2000
+ENT.EZupgradable = true
 --
 ENT.StaticPerfSpecs = {
 	MaxDurability = 400,
@@ -44,7 +45,6 @@ local STATE_BROKEN, STATE_OFF, STATE_RUNNING = -1, 0, 1
 
 if(SERVER)then
 	function ENT:CustomInit()
-		self.EZupgradable = true
 		self:SetProgress(0)
 		if self.SpawnFull then
 			self:SetWater(self.MaxWater)
@@ -98,7 +98,7 @@ if(SERVER)then
 		if self.NextUse > CurTime() then return end
 		local State = self:GetState()
 		local OldOwner = JMod.GetEZowner(self)
-		local Alt = activator:KeyDown(JMod.Config.General.AltFunctionKey)
+		local Alt = JMod.IsAltUsing(activator)
 		JMod.SetEZowner(self, activator, true)
 		if(State == STATE_BROKEN)then
 			JMod.Hint(activator, "destroyed", self)

@@ -222,7 +222,8 @@ function SWEP:ApplyForce()
 		end
 
 		vec:Normalize()
-		local avec, velo = vec * len ^ 1.5, phys:GetVelocity() - self:GetOwner():GetVelocity()
+		local plyVel = self.Owner:GetVelocity()
+		local avec, velo = vec * len^1.5, phys:GetVelocity() - (plyVel * 2)
 		local Force = (avec - velo / 2) * mul
 		local ForceNormal = Force:GetNormalized()
 		local ForceMagnitude = Force:Length()
@@ -269,16 +270,7 @@ function SWEP:SetCarrying(ent, bone, pos, dist)
 		else
 			self.CarryPos = nil
 		end
-		--[[hook.Add("EntityTakeDamage", "CancelDamageFromCarryEnt"..tostring(self.CarryEnt:EntIndex()), function(target, dmginfo)
-			if (target == self:GetOwner()) and (dmginfo:GetInflictor() == self.CarryEnt) and (dmginfo:GetDamageType() == DMG_CRUSH) then
-				return true
-			end
-		end)--]]
 	else
-		--[[if IsValid(self.CarryEnt) then
-			local Index = self.CarryEnt:EntIndex()
-			hook.Remove("EntityTakeDamage", "CancelDamageFromCarryEnt"..tostring(Index))
-		end--]]
 		self.CarryEnt = nil
 		self.CarryBone = nil
 		self.CarryPos = nil
@@ -365,7 +357,7 @@ function SWEP:PrimaryAttack()
 		side = "fists_right"
 	end
 
-	self:SetNextDown(CurTime() + 7)
+	self:SetNextDown(CurTime() + 5)
 
 	if not self:GetFists() then
 		self:SetFists(true)
@@ -396,7 +388,7 @@ function SWEP:PrimaryAttack()
 		self:GetOwner():ViewPunch(Angle(0, 0, math.random(-2, 2)))
 
 		timer.Simple(.075, function()
-			if IsValid(self) then
+			if IsValid(self) and IsValid(self.Owner) then
 				self:AttackFront()
 			end
 		end)

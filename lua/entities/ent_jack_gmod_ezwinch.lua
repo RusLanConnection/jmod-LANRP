@@ -12,6 +12,7 @@ ENT.AdminSpawnable = true
 ENT.JModPreferredCarryAngles = Angle(0, 0, 0)
 ENT.Model = "models/jmod/ezwinch01.mdl"
 ENT.Mass = 30
+ENT.EZupgradable = false
 --
 ENT.StaticPerfSpecs={ 
 	MaxElectricity = 100,
@@ -84,7 +85,6 @@ if SERVER then
 
 	function ENT:CustomInit()
 		self.NextUseTime = 0
-		self.EZupgradable = false
 		self.EZcolorable = false
 		self.MaxConnectionRange = 1000
 		self.CurrentCableLength = 0
@@ -167,7 +167,7 @@ if SERVER then
 		self.NextUseTime = CurTime() + .5
 		local State = self:GetState()
 		local IsPly = (IsValid(activator) and activator:IsPlayer())
-		local Alt = IsPly and activator:KeyDown(JMod.Config.General.AltFunctionKey)
+		local Alt = IsPly and JMod.IsAltUsing(activator)
 		JMod.SetEZowner(self, activator)
 
 		if State == JMod.EZ_STATE_BROKEN then

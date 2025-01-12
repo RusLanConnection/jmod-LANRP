@@ -5,11 +5,11 @@ ENT.Author = "Jackarunda, TheOnly8Z"
 ENT.PrintName = "EZ Frag Grenade"
 ENT.Category = "JMod - EZ Explosives"
 ENT.Spawnable = true
-ENT.JModPreferredCarryAngles = Angle(0, -140, 0)
+ENT.JModPreferredCarryAngles = Angle(0, -180, 0)
 ENT.Model = "models/jmod/explosives/grenades/fragnade/w_fragjade.mdl"
 ENT.Material = "models/mats_jack_nades/gnd"
 ENT.SpoonScale = 2
-ENT.PinBodygroup = nil
+ENT.PinBodygroup = {1, 1}
 ENT.SpoonBodygroup = {2, 1}
 ENT.DetDelay = 4
 
@@ -28,13 +28,13 @@ if SERVER then
 		util.Effect("eff_jack_minesplode", plooie, true, true)
 		util.ScreenShake(SelfPos, 20, 20, 1, 1000)
 
-		local GroundTr = util.QuickTrace(SelfPos + Vector(0, 0, 5), Vector(0, 0, -15), {self})
+		local GroundTr = util.QuickTrace(SelfPos + Vector(0, 0, 5), Vector(0, 0, -15), self)
 
-		--              shooter, origin, fragNum, fragDmg, fragMaxDist, attacker, direction, spread, zReduction
+		------------------ shooter, origin, fragNum, fragDmg, fragMaxDist, attacker, direction, spread, zReduction
 		if GroundTr.Hit then
-			JMod.FragSplosion(self, SelfPos + Vector(0, 0, 5), 3000, 80, 2500, JMod.GetEZowner(self), GroundTr.HitNormal, .8, 40)
+			JMod.FragSplosion(self, SelfPos + Vector(0, 0, 10), 1500, 35, 2000, JMod.GetEZowner(self), GroundTr.HitNormal, .6, 10)
 		else
-			JMod.FragSplosion(self, SelfPos, 3000, 80, 2500, JMod.GetEZowner(self), nil, nil, 2)
+			JMod.FragSplosion(self, SelfPos, 2000, 35, 2000, JMod.GetEZowner(self))
 		end
 		self:Remove()
 	end

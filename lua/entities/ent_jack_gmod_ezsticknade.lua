@@ -19,7 +19,7 @@ ENT.DetDelay = 4
 
 ENT.Hints = {"frag sleeve"}
 
-ENT.EZstorageVolumeOverride = 2
+ENT.JModEZstorableVolume = 2
 ENT.Splitterring = false
 local BaseClass = baseclass.Get(ENT.Base)
 
@@ -43,6 +43,17 @@ if SERVER then
 		local SelfPos = self:GetPos()
 		JMod.Sploom(self.EZowner, self:GetPos(), math.random(10, 20), 254)
 		self:EmitSound("snd_jack_fragsplodeclose.ogg", 90, 100)
+
+		if self.Splitterring then
+			local plooie = EffectData()
+			plooie:SetOrigin(SelfPos)
+			plooie:SetScale(.5)
+			plooie:SetRadius(1)
+			plooie:SetNormal(vector_up)
+			util.Effect("eff_jack_minesplode", plooie, true, true)
+			util.ScreenShake(SelfPos, 20, 20, 1, 1000)
+			JMod.FragSplosion(self, SelfPos + Vector(0, 0, 20), 1500, 70, 2500, JMod.GetEZowner(self), self:GetUp(), .75)
+			self:Remove()
 		local plooie = EffectData()
 		plooie:SetOrigin(SelfPos)
 		plooie:SetScale(.5)

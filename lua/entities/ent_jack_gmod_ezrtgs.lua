@@ -5,7 +5,7 @@ ENT.PrintName = "EZ Mini Radioisotope Thermoelectric Generator"
 ENT.Author = "Jackarunda, AdventureBoots"
 ENT.Category = "JMod - EZ Machines"
 ENT.Information = "Probably came out of a soviet satillite"
-ENT.Spawnable = true
+ENT.Spawnable = false
 ENT.AdminOnly = true
 ENT.Base = "ent_jack_gmod_ezmachine_base"
 ENT.Model = "models/jmod/machines/radioisotope-powergenerator-small.mdl"
@@ -19,7 +19,7 @@ ENT.Mass = 30
 ENT.SpawnHeight = 1
 --
 ENT.JModEZstorable = true
-ENT.EZstorageVolumeOverride = 10
+ENT.JModEZstorableVolume = 10
 ENT.JModInvAllowedActive = true
 --
 ENT.StaticPerfSpecs = {
@@ -54,7 +54,7 @@ if(SERVER)then
 	function ENT:Use(activator)
 		if self.NextUseTime > CurTime() then return end
 		local State = self:GetState()
-		local Alt = activator:KeyDown(JMod.Config.General.AltFunctionKey)
+		local Alt = JMod.IsAltUsing(activator)
 		JMod.SetEZowner(self, activator)
 		JMod.Colorify(self)
 

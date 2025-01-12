@@ -140,13 +140,16 @@ net.Receive("JMod_EZtoolbox", function(ln, ply)
 	if IsValid(Wep) then
 		Wep:SwitchSelectedBuild(Name)
 	end
+	Wep.EZpreview = net.ReadTable()
 end)
 
 net.Receive("JMod_EZworkbench", function(l, ply)
 	if not (IsValid(ply) and ply:Alive()) then return end
 	local bench, name = net.ReadEntity(), net.ReadString()
-
-	if (IsValid(bench) and bench.TryBuild) and ply:GetPos():DistToSqr(bench:GetPos()) < 15000 then
+	if not IsValid(bench) then return end
+	if name == "JMOD_SCRAPINV" and bench.ScrapInv then
+		bench:ScrapInv(ply)
+	elseif bench.TryBuild and ply:GetPos():Distance(bench:GetPos()) < 300 then
 		bench:TryBuild(name, ply)
 	end
 end)
@@ -187,7 +190,7 @@ net.Receive("JMod_ModifyConnections", function(ln, ply)
 	if not IsValid(Ent) then return end
 	local Ent2 = net.ReadEntity()
 	--print(Action, Ent, Ent2)
-	if (JMod.GetEZowner(Ent) ~= ply) then return end
+	if (JMod.GetEZowner(Ent) ~= ply) or (ply:GetPos():Distance(Ent:GetPos()) > 500) then return end
 
 	if Action == "connect" then
 		JMod.StartConnection(Ent, ply)
@@ -197,10 +200,8 @@ net.Receive("JMod_ModifyConnections", function(ln, ply)
 	elseif Action == "disconnect_all" then
 		if Ent.DisconnectAll then
 			Ent:DisconnectAll()
-		elseif Ent.EZconnections then
-			for k, v in pairs(Ent.EZconnections) do
-				JMod.RemoveConnection(Ent, k)
-			end
+		else
+			JMod.RemoveResourceConnection(Ent)
 		end
 	elseif Action == "produce" then
 		if IsValid(Ent2) and JMod.ConnectionValid(Ent, Ent2) and Ent2.ProduceResource then
@@ -214,6 +215,12 @@ net.Receive("JMod_ModifyConnections", function(ln, ply)
 				Ent2:TurnOn(ply)
 			elseif Ent2:GetState() >= JMod.EZ_STATE_ON then
 				Ent2:TurnOff(ply)
+			end
+		elseif Ent.GetState then
+			if Ent:GetState() == JMod.EZ_STATE_OFF then
+				Ent:TurnOn(ply)
+			elseif Ent:GetState() >= JMod.EZ_STATE_ON then
+				Ent:TurnOff(ply)
 			end
 		end
 	end

@@ -296,6 +296,7 @@ if(SERVER)then
 				self:Engage(value)
 			else
 				self.EngageOverride = false
+				self:Disengage()
 			end
 		elseif iname == "AimAt" then
 			if value == Vector(0, 0, 0) then
@@ -377,6 +378,7 @@ if(SERVER)then
 			State = 0 -- 0=not searching, 1=aiming at last known point, 2=aiming at predicted point
 			
 		}
+		-- This is all mainly for wire
 		self.EngageOverride = nil
 		self.AimOverride = nil
 		self.FireOverride = nil
@@ -444,6 +446,9 @@ if(SERVER)then
 		AimAng:RotateAroundAxis(Up, self:GetAimYaw())
 		local AimVec = AimAng:Forward()
 		local AttackAngle =- math.deg(math.asin(AimVec:Dot(IncomingVec)))
+		--
+		local Attacker = dmginfo:GetAttacker()
+		local Time = CurTime()
 		if(AttackAngle >= 60)then
 			Mult = Mult*.2
 			if(math.random(1,2) == 1)then
@@ -472,7 +477,19 @@ if(SERVER)then
 					})
 				end
 			end
+		elseif (self:GetState() > JMod.EZ_STATE_OFF) and not(IsValid(self.Target)) and (self.NextTargetReSearch < Time) and not(self.EngageOverride or self.AimOverride) then
+			self.NextTargetSearch = Time + 3
+			self.SearchData.NextSearchChange = Time + 3
+			local LikelyOrigin = dmginfo:GetDamagePosition() - IncomingVec * 1000
+			self.SearchData.LastKnownPos = LikelyOrigin
+			self.SearchData.LastKnownVel = IncomingVec
+			self.SearchData.State = 1
+			self.NextTargetReSearch = Time + 3 --self.TargetLockTime
+			self.SearchData.State = 0
+			self:SetState(STATE_ENGAGING)
+			self:EmitSound("snds_jack_gmod/ezsentry_engage.ogg", 65, 100)--]]
 		end
+
 		return Mult
 	end
 
@@ -570,11 +587,21 @@ if(SERVER)then
 		local TargPos, SelfPos = self:DetermineTargetAimPoint(ent), self:GetPos() + self:GetUp() * 35
 		local Dist = TargPos:Distance(SelfPos)
 		if Dist > self.TargetingRadius then return false end
+		local Filter = {self, ent, self.NPCTarget}
+
+		if ent:IsPlayer() and IsValid(ent:GetEntityInUse()) then
+			table.insert(Filter, ent:GetUseEntity())
+		end
+
+		local Parent = ent:GetParent()
+		if IsValid(Parent) then
+			table.insert(Filter, Parent)
+		end
 
 		local Tr = util.TraceLine({
 			start = SelfPos,
 			endpos = TargPos,
-			filter = {self, ent, self.NPCTarget},
+			filter = Filter,
 			mask = MASK_SHOT + MASK_WATER
 		})
 
@@ -1167,7 +1194,7 @@ if(SERVER)then
 
 	function ENT:GetTargetAimOffset(point)
 		if self.AimOverride then point = self.AimOverride end
-		if not point then return nil, nil end
+		if not point then return 0, 0 end
 		local SelfPos = self:GetPos() + self:GetUp() * 35
 		local TargAng = self:WorldToLocalAngles((point - SelfPos):Angle())
 		local GoalPitch, GoalYaw = TargAng.p, TargAng.y

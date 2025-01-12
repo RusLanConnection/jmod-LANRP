@@ -51,7 +51,8 @@ if SERVER then
 
 		self.EZowner = activator
 
-		if activator:KeyDown(JMod.Config.General.AltFunctionKey) then
+		if JMod.IsAltUsing(activator) then
+			if not IsValid(self.DetCable) then self:EmitSound("buttons/button4.wav") return end
 			self:EmitSound("snds_jack_gmod/plunger.ogg")
 			self:SetFired(true)
 
@@ -64,6 +65,28 @@ if SERVER then
 			self.DieTime = CurTime() + 10
 		else
 			activator:PickupObject(self)
+		end
+	end
+
+	function ENT:PhysicsCollide(data, physobj)
+		if data.DeltaTime > 0.5 and data.Speed > 100 then
+			--[[if data.Speed > 200 then
+				self:EmitSound("Metal_Box.Break")
+				self.DieTime = CurTime() + 2
+			end--]]
+			if data.HitEntity == self.Satchel then
+				timer.Simple(0, function()
+					if not (IsValid(self) and IsValid(self.Satchel)) then return end
+					self:ForcePlayerDrop()
+					self:SetPos(self.Satchel:GetPos() + self.Satchel:GetForward() * 5)
+					self:SetAngles(self.Satchel:GetAngles())
+					self:SetParent(data.HitEntity)
+					if IsValid(self.DetCable) then
+						self.DetCable:Remove()
+					end
+					data.HitEntity:SetState(JMod.EZ_STATE_OFF)
+				end)
+			end
 		end
 	end
 
