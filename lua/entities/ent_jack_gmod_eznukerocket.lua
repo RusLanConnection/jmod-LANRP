@@ -52,10 +52,10 @@ if SERVER then
             self:GetPhysicsObject():EnableDrag(false)
         end)
 
-        ---
-        self:SetState(STATE_OFF)
-        --self.NextDet = 0
-        self.FuelLeft = 1000
+		---
+		self:SetState(STATE_OFF)
+		self.NextDet = 0
+		self.FuelLeft = 30
 
         if istable(WireLib) then
             self.Inputs = WireLib.CreateInputs(self, {"Detonate", "Arm", "Launch"}, {"Directly detonates rocket", "Arms rocket", "Launches rocket"})
@@ -150,35 +150,24 @@ if SERVER then
         if State < 0 then return end
         local Alt = activator:KeyDown(JMod.Config.General.AltFunctionKey)
 
-        if State == STATE_OFF then
-            if Alt then
-                local squad = SquadMenu:GetSquad(JMod.GetEZowner(self):GetSquadID())
-
-                if not squad then return end
-
-                if not GetConVar("sv_cheats"):GetBool() then
-                    if squad.hp >= 70 and not GetGlobalVar("NuclearWar") then 
-                        activator:LanRPChatPrint(Color(255,255,255), "Мораль вашей фракции должна быть ниже ", Color(255,0,0), "70", Color(255,255,255), " единиц.") 
-                        return 
-                    end
-                end
-
-                JMod.SetEZowner(self, activator)
-                self:EmitSound("snds_jack_gmod/bomb_arm.ogg", 60, 120)
-                self:SetState(STATE_ARMED)
-                self.EZlaunchableWeaponArmedTime = CurTime()
-                JMod.Hint(activator, "launch")
-            else
-                --activator:PickupObject(self)
-                JMod.Hint(activator, "arm")
-            end
-        elseif State == STATE_ARMED then
-            self:EmitSound("snds_jack_gmod/bomb_disarm.ogg", 60, 120)
-            self:SetState(STATE_OFF)
-            JMod.SetEZowner(self, activator)
-            self.EZlaunchableWeaponArmedTime = nil
-        end
-    end
+		if State == STATE_OFF then
+			if Alt then
+				JMod.SetEZowner(self, activator)
+				self:EmitSound("snds_jack_gmod/bomb_arm.ogg", 60, 120)
+				self:SetState(STATE_ARMED)
+				self.EZlaunchableWeaponArmedTime = CurTime()
+				JMod.Hint(activator, "launch")
+			else
+				--activator:PickupObject(self)
+				JMod.Hint(activator, "arm")
+			end
+		elseif State == STATE_ARMED then
+			self:EmitSound("snds_jack_gmod/bomb_disarm.ogg", 60, 120)
+			self:SetState(STATE_OFF)
+			JMod.SetEZowner(self, activator)
+			self.EZlaunchableWeaponArmedTime = nil
+		end
+	end
 
     local function SendClientNukeEffect(pos, range)
         net.Start("JMod_NuclearBlast")
@@ -222,53 +211,17 @@ if SERVER then
             NukeFlash:Activate()
         end
 
-        ---
-        --[[for h = 1, 30 do
-            timer.Simple(h / 10, function()
-                local ThermalRadiation = DamageInfo()
-                ThermalRadiation:SetDamageType(DMG_BURN)
-                ThermalRadiation:SetDamage(25 / h)
-                ThermalRadiation:SetAttacker(Att)
-                ThermalRadiation:SetInflictor(game.GetWorld())
-                util.BlastDamageInfo(ThermalRadiation, SelfPos, 15000)
-            end)
-        end]]
-
-        for _, ply in player.Iterator() do 
-            if ply:GetPos():Distance(SelfPos + Vector(0,0, 1024)) <= 15000 then
-                local TraceSee = util.TraceLine( {
-                    start = SelfPos,
-                    endpos = ply:GetPos(),
-                })
-
-                if TraceSee.HitWorld and not ply:IsOnFire() then
-                    print("GOVNO")
-                    ply:Ignite(30)
-                end
-            end
-        end
-
-        for _, ply in player.Iterator() do 
-            if ply:GetPos():Distance(SelfPos) <= 8000 then
-                ply:GodEnable()
-                ply:SetLaggedMovementValue(0.3)
-                ply:StripWeapons()
-
-                timer.Simple(4.5, function()
-                    ply:ScreenFade( SCREENFADE.IN, Color( 255, 255, 255 ), 2, 3 )
-                end)
-
-                timer.Simple(6, function()
-                    if IsValid(ply) and ply:Alive() then
-                        ply:Extinguish()
-                        ply:GodDisable()
-                        ply:SetLaggedMovementValue(1)
-
-                        ply:Kill()
-                    end
-                end)
-            end
-        end
+		---
+		for h = 1, 30 do
+			timer.Simple(h / 10, function()
+				local ThermalRadiation = DamageInfo()
+				ThermalRadiation:SetDamageType(DMG_BURN)
+				ThermalRadiation:SetDamage((50 / h) * Power)
+				ThermalRadiation:SetAttacker(Att)
+				ThermalRadiation:SetInflictor(game.GetWorld())
+				util.BlastDamageInfo(ThermalRadiation, SelfPos, 5000)
+			end)
+		end
 
         ---
         for k, ply in player.Iterator() do
@@ -300,9 +253,8 @@ if SERVER then
                     end
                 end
 
-                ---
-				debugoverlay.Sphere( SelfPos, 250 * i, 2, Color( 255, 0, 0 ), true )
-                util.BlastDamage(game.GetWorld(), Att, SelfPos, 400 * i, 6000 / i + 50)
+				---
+				util.BlastDamage(game.GetWorld(), Att, SelfPos, 2700 * i, 500 / i + 1)
 
                 ---
                 JMod.WreckBuildings(nil, SelfPos, powa, renj, i < 3)
@@ -343,201 +295,37 @@ if SERVER then
         ---
     end
 
-    function ENT:OnRemove()
-    end
-    --
+	function ENT:OnRemove()
+	end
 
-    function ENT:CalculateLastPos() 
-        local Grav = physenv.GetGravity()
-        local FT = FrameTime() 
-        local MissilePos = self:GetPos() 
-        local oPos = MissilePos 
-        local Vel = -self:GetAngles():Right() * 2250 
-        local Acceleration = 280 -- Ускорение
-        local dist = 0 
-        local EndPos 
-        local positions = {} 
-        local Iteration = 0 
-    
-        while Iteration < 5000 do 
-            Iteration = Iteration + 0.05 
-    
-            -- Увеличиваем предварительно скорость с учетом ускорения
-            Vel = Vel + Vel:GetNormalized() * Acceleration * FT
-            Vel = Vel + Grav * FT
-    
-            local StartPos = oPos 
-            EndPos = oPos + Vel * FT 
-    
-            dist = dist + StartPos:Distance(EndPos) 
-    
-            local trace = util.TraceLine({ 
-                start = StartPos, 
-                endpos = EndPos, 
-                filter = self, 
-                mask = MASK_SOLID_BRUSHONLY, 
-            }) 
-    
-            debugoverlay.Axis(oPos, Angle(), 100, 10, true) 
-    
-            positions[#positions + 1] = oPos 
-    
-            oPos = EndPos 
-    
-            if trace.Hit then 
-                break 
-            end 
-        end 
-    
-        return EndPos 
-    end
-
-    function ENT:calculateRocketPosition(LastPos)
-        local Grav = physenv.GetGravity() / 2
-        local FT = FrameTime()
-        local MissilePos = self:GetPos()
-        local oPos = MissilePos
-        local Vel = self:GetVelocity()
-
-        local dist = 0
-
-        local EndPos
-
-
-        local positions = {}
-
-
-        local Iteration = 0
-        while Iteration < 300 do
-            Iteration = Iteration + 1
-
-            Vel = Vel + Grav * FT
-
-            local StartPos = oPos
-            EndPos = oPos + Vel * FT
-
-            dist = dist + StartPos:Distance(EndPos)
-
-            local trace = util.TraceLine( {
-                start = StartPos,
-                endpos = EndPos,
-                filter = self
-            } )
-
-			debugoverlay.Axis( oPos, Angle(), 100, 10, true )
-
-            positions[#positions + 1] = oPos
-
-            oPos = EndPos
-
-            if trace.Hit then
-                break
-            end
-        end
-
-        return positions
-    end
-
-    local ruslan_red = Color(180, 22, 22)
-
-    function ENT:Launch()
-        local squad = SquadMenu:GetSquad(JMod.GetEZowner(self):GetSquadID())
-
-        if not squad then return end
-        
-        if self:GetState() ~= STATE_ARMED then return end
-        self:SetState(STATE_LAUNCHED)
-        local Phys = self:GetPhysicsObject()
-        constraint.RemoveAll(self)
-        Phys:EnableMotion(true)
-        Phys:Wake()
-
-        --self:SetGravity(0)
-
-        Phys:ApplyForceCenter(-self:GetRight() * 20000)
-        ---
-        self:EmitSound("snds_jack_gmod/rocket_launch.ogg", 80, math.random(60, 80))
-        local Eff = EffectData()
-        Eff:SetOrigin(self:GetPos())
-        Eff:SetNormal(self:GetRight())
-        Eff:SetScale(5)
-        util.Effect("eff_jack_gmod_rocketthrust", Eff, true, true)
+	--
+	function ENT:Launch()
+		if self:GetState() ~= STATE_ARMED then return end
+		self:SetState(STATE_LAUNCHED)
+		local Phys = self:GetPhysicsObject()
+		constraint.RemoveAll(self)
+		Phys:EnableMotion(true)
+		Phys:Wake()
+		Phys:ApplyForceCenter(-self:GetRight() * 20000)
+		---
+		self:EmitSound("snds_jack_gmod/rocket_launch.ogg", 80, math.random(60, 80))
+		local Eff = EffectData()
+		Eff:SetOrigin(self:GetPos())
+		Eff:SetNormal(self:GetRight())
+		Eff:SetScale(5)
+		util.Effect("eff_jack_gmod_rocketthrust", Eff, true, true)
 
         ---
         for i = 1, 4 do
             util.BlastDamage(self, JMod.GetEZowner(self), self:GetPos() + self:GetRight() * i * 40, 50, 50)
         end
 
-        util.ScreenShake(self:GetPos(), 20, 255, .5, 300)
+		util.ScreenShake(self:GetPos(), 20, 255, .5, 300)
+		---
+		self.NextDet = CurTime() + .25
 
-        --[[timer.Simple(2, function()
-
-            local predictedPath = calculateRocketTrajectory(self)
-
-            for _, pos in ipairs(predictedPath) do
-                debugoverlay.Axis( pos, Angle(0,0,0), 100, 5, true )
-            end
-        end)]]
-        ---
-        --self.NextDet = CurTime() + .25
-
-        JMod.Hint(JMod.GetEZowner(self), "backblast", self:GetPos())
-        --------------
-        
-        if squad.YaderkaLaunched == nil then
-            squad.YaderkaLaunched = CurTime()
-        end
-
-        if squad and squad.YaderkaLaunched <= CurTime() then
-            for k, v in pairs(player.GetAll()) do
-                v:LanRPChatPrint(ruslan_red, "Фракция ", Color(squad.r,squad.g,squad.b), squad.name, ruslan_red, " запустила ядерные ракеты!")
-                v:PlayLocalSound("hoi4/NukeLaunch.wav")
-
-                --[[local random = math.random(1, 100)
-                if random <= 15 then
-                    timer.Simple(3, function()
-                        v:LanRPChatPrint(ruslan_red, "Нам всем конец...")
-                    end)
-                end]]
-            end
-
-            squad.YaderkaLaunched = CurTime() + 60
-        end
-
-        for _, ply in player.Iterator() do
-            if ply:GetPos():Distance(self:GetPos()) >= 10000 then
-                timer.Simple(0.5, function()
-                    if IsValid(ply) then
-                        ply:PlayLocalSound("LANRP/nuke/missile_launch_far_0" .. math.random(1,2) .. ".ogg")
-                    end
-                end)
-            else
-                ply:PlayLocalSound("LANRP/nuke/missile_launch_map_0" .. math.random(1,2) .. ".ogg")
-            end
-        end
-    end
-
-    function ENT:OnRemove()
-        if not GetGlobalVar( "NuclearWar") and self:GetState() == STATE_LAUNCHED then
-            timer.Simple(10, function()
-                for _, ply in player.Iterator() do
-                    ply:SendMessageOnTop("НАЧАЛАСЬ ЯДЕРНАЯ ВОЙНА", Color(120, 0, 0))
-                    ply:PlayLocalSound("LANRP/nuke/nuclear war.wav") 
-                end
-
-                SetGlobalVar( "NuclearWar", true)
-
-                timer.Create("NuclearWar", 900, 1, function()
-                    for _, ply in player.Iterator() do
-                        ply:LanRPChatPrint(Color(87, 87, 255), "[Глобальное сообщение] ", Color(120, 0, 0), "Закончилась ядерная война!")
-                        ply:PlayLocalSound("hoi4/War_declaration_01.wav")
-                    end
-
-                    SetGlobalVar( "NuclearWar", false)
-                end)
-            end)
-        end
-    end
+		JMod.Hint(JMod.GetEZowner(self), "backblast", self:GetPos())
+	end
 
     function ENT:EZdetonateOverride(detonator)
         self:Detonate()

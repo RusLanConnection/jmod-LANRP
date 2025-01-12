@@ -1774,17 +1774,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				results = "ent_jack_gmod_ezpaper",
 				craftingReqs = {
 					[JMod.EZ_RESOURCE_TYPES.WOOD] = 30,
-					[JMod.EZ_RESOURCE_TYPES.WATER] = 40
-				},
-				category = "Resources",
-				craftingType = {"workbench", "craftingtable"},
-				description = "Writing material that can be used for more malicious purposes."
-			},
-            ["EZ Organics"] = {
-				results = "ent_jack_gmod_ezorganics",
-				craftingReqs = {
-					[JMod.EZ_RESOURCE_TYPES.WOOD] = 50,
-					[JMod.EZ_RESOURCE_TYPES.WATER] = 50
+					[JMod.EZ_RESOURCE_TYPES.WATER] = 70
 				},
 				category = "Resources",
 				craftingType = {"workbench", "craftingtable"},
