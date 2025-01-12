@@ -1,4 +1,4 @@
-﻿-- Jackarunda 2021
+-- Jackarunda 2021
 AddCSLuaFile()
 ENT.Base = "ent_jack_gmod_ezgrenade"
 ENT.Author = "Jackarunda, TheOnly8Z"
@@ -31,7 +31,7 @@ if SERVER then
 				JMod.SetEZowner(Gas, Owner)
 				Gas:Spawn()
 				Gas:Activate()
-				Gas.CurVel = SelfVel + VectorRand() * math.random(-100, 100)
+				Gas.CurVel = SelfVel + VectorRand() * math.random(-500, 500)
 				Gas.MaxLife = 60
 			end)
 		end

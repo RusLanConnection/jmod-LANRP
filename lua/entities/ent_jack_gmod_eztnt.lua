@@ -1,4 +1,4 @@
-﻿-- Jackarunda 2021
+-- Jackarunda 2021
 AddCSLuaFile()
 ENT.Type = "anim"
 ENT.Author = "Jackarunda"
@@ -234,7 +234,7 @@ if SERVER then
 			Fsh:SetNormal(Ang:Forward())
 			util.Effect("eff_jack_fuzeburn", Fsh, true, true)
 			self:EmitSound("snd_jack_sss.wav", 65, math.Rand(90, 110))
-			JMod.EmitAIsound(self:GetPos(), 500, .5, 8)
+			--JMod.EmitAIsound(self:GetPos(), 500, .5, 8)
 			self.Fuze = self.Fuze - .5
 
 			if self.Fuze <= 0 then

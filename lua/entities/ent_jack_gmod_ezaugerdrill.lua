@@ -213,12 +213,12 @@ if(SERVER)then
 					self:ProduceResource()
 				end
 
-				JMod.EmitAIsound(self:GetPos(), 300, .5, 256)
+				--JMod.EmitAIsound(self:GetPos(), 300, .5, 256)
 			end
 		end
 
 		if (self.NextEffectThinkTime < Time) then
-			self.NextEffectThinkTime = Time + .1
+			self.NextEffectThinkTime = Time + .5
 			if State == STATE_RUNNING then
 				local Dert = EffectData()
 				Dert:SetOrigin(SelfPos - Up * 100 - Right * 0 - Forward * 9)

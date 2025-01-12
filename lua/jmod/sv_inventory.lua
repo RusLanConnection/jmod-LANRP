@@ -1,11 +1,10 @@
-﻿JMod.VOLUMEDIV = 500
+JMod.VOLUMEDIV = 500
 JMod.DEFAULT_INVENTORY = {EZresources = {}, items = {}, weight = 0, volume = 0, maxVolume = 0}
 JMod.GRABDISTANCE = 70
 
 function JMod.GetStorageCapacity(ent)
 	if not(IsValid(ent)) then return 0 end
 	if ent.IsJackyEZcrate then return 0 end
-	if ent.IsJackyEZresource then return 0 end
 	local Capacity = 0
 	local Phys = ent:GetPhysicsObject()
 
@@ -174,12 +173,10 @@ function JMod.AddToInventory(invEnt, target, noUpdate)
 	if AddingResource then
 		local res, amt = target[1], target[2] or Capacity
 		if IsValid(res) and res.IsJackyEZresource then
-			resEnt = res
-			res = resEnt.EZsupplies
-			local SuppliesLeft = resEnt:GetEZsupplies(res) or 0
-			jmodinv.EZresources[res] = (jmodinv.EZresources[res] or 0) + math.min(SuppliesLeft, amt)
-			resEnt:SetEZsupplies(res, SuppliesLeft - (amt or SuppliesLeft))
-			JMod.ResourceEffect(res, resEnt:LocalToWorld(resEnt:OBBCenter()), invEnt:LocalToWorld(invEnt:OBBCenter()), 1, 1, 1)
+			local SuppliesLeft = res:GetEZsupplies(res.EZsupplies) or 0
+			jmodinv.EZresources[res.EZsupplies] = (jmodinv.EZresources[res.EZsupplies] or 0) + math.min(SuppliesLeft, amt)
+			res:SetEZsupplies(res.EZsupplies, SuppliesLeft - (amt or SuppliesLeft))
+			JMod.ResourceEffect(res.EZsupplies, res:LocalToWorld(res:OBBCenter()), invEnt:LocalToWorld(invEnt:OBBCenter()), 1, 1, 1)
 		else
 			jmodinv.EZresources[res] = (jmodinv.EZresources[res] or 0) + amt
 		end
@@ -215,7 +212,12 @@ function JMod.AddToInventory(invEnt, target, noUpdate)
 		target:SetPos(PosToFit)
 		target:SetAngles(target.JModPreferredCarryAngles or PosToFit:Angle())--]]
 		---
-		target:SetNoDraw(true)
+        
+		--target:SetNoDraw(true)
+        
+        target:SetColor(Color(target:GetColor().r, target:GetColor().g, target:GetColor().b, 0))
+        target:SetRenderMode( RENDERMODE_NONE )
+        
 		target:SetNotSolid(true)
 		if IsValid(target:GetPhysicsObject()) then
 			target:GetPhysicsObject():EnableMotion(false)
@@ -231,7 +233,9 @@ function JMod.AddToInventory(invEnt, target, noUpdate)
 			for k, v in pairs(Children) do
 				v.JModWasNoDraw = v:GetNoDraw()
 				v.JModWasNoSolid = v:IsSolid()
-				v:SetNoDraw(true)
+				--v:SetNoDraw(true)
+                v:SetColor(v:GetColor().r, v:GetColor().g, v:GetColor().b, 0)
+                v:SetRenderMode( RENDERMODE_NONE )
 				v:SetNotSolid(true)
 			end
 		end
@@ -289,7 +293,9 @@ function JMod.RemoveFromInventory(invEnt, target, pos, noUpdate, transfer)
 		if not(pos) and not(transfer) then
 			SafeRemoveEntityDelayed(target, 0)
 		else
-			target:SetNoDraw(false)
+			--target:SetNoDraw(false)
+            target:SetColor(Color(target:GetColor().r, target:GetColor().g, target:GetColor().b, 255))
+            target:SetRenderMode( RENDERMODE_NORMAL )
 			target:SetNotSolid(false)
 			target:SetAngles(target.JModPreferredCarryAngles or Angle(0, 0, 0))
 			if target.EZoldMoveType then
@@ -310,6 +316,7 @@ function JMod.RemoveFromInventory(invEnt, target, pos, noUpdate, transfer)
 					--end
 					Phys:EnableMotion(true)
 					Phys:Wake()
+                    Phys:EnableGravity( true )
 					if IsValid(invEnt) and IsValid(invEnt:GetPhysicsObject()) then
 						Phys:SetVelocity(invEnt:GetPhysicsObject():GetVelocity())
 					end
@@ -318,7 +325,14 @@ function JMod.RemoveFromInventory(invEnt, target, pos, noUpdate, transfer)
 			local Children = target:GetChildren()
 			if Children then
 				for k, v in pairs(Children) do
-					v:SetNoDraw(v.JModWasNoDraw or false)
+                    if v.JModWasNoDraw then
+                    	v:SetColor(Color(v:GetColor().r, v:GetColor().g, v:GetColor().b, 0))
+                        v:SetRenderMode( RENDERMODE_NONE )
+                    else
+                        v:SetColor(Color(v:GetColor().r, v:GetColor().g, v:GetColor().b, 255))
+                        v:SetRenderMode( RENDERMODE_NORMAL )
+                    end
+					--v:SetNoDraw(v.JModWasNoDraw or false)
 					v:SetNotSolid(v.JModWasNoSolid or false)
 				end
 			end
@@ -450,12 +464,7 @@ net.Receive("JMod_ItemInventory", function(len, ply)
 	elseif command == "take_res" then
 		if not(CanSeeNonPlyInv) then return end
 		local amt = math.Clamp(desiredAmt, 0, invEnt.JModInv.EZresources[resourceType] or 0)
-		if invEnt.IsJackyEZresource then
-			amt = math.Clamp(desiredAmt, 0, invEnt:GetEZsupplies(resourceType) or 0)
-			invEnt:SetEZsupplies(resourceType, invEnt:GetEZsupplies(resourceType) - amt)
-		else
-			JMod.RemoveFromInventory(invEnt, {resourceType, amt}, nil, false)
-		end
+		JMod.RemoveFromInventory(invEnt, {resourceType, amt}, nil, false)
 		JMod.AddToInventory(ply, {resourceType, amt})
 		sound.Play("snd_jack_clothequip.ogg", Tr.HitPos, 60, math.random(90, 110)) --"snds_jack_gmod/equip"..math.random(1, 5)..".ogg"
 	elseif command == "stow_res" then
@@ -484,9 +493,9 @@ function JMod.EZ_GrabItem(ply, cmd, args)
 	if (ply.EZnextGrabTime or 0) > Time then return end
 	ply.EZnextGrabTime = Time + 1
 
-	local TargetEntity = isnumber(args[1]) and Entity(tonumber(args[1]))
+	local TargetEntity = args[1]
 
-	if not(IsValid(TargetEntity) and (TargetEntity:GetPos():Distance(ply:GetShootPos()) < JMod.GRABDISTANCE)) then
+	if not IsValid(TargetEntity) then
 		TargetEntity = util.QuickTrace(ply:GetShootPos(), ply:GetAimVector() * JMod.GRABDISTANCE, ply).Entity
 	end
 
@@ -500,7 +509,6 @@ function JMod.EZ_GrabItem(ply, cmd, args)
 			net.WriteTable(TargetEntity.JModInv)
 		net.Send(ply)
 		sound.Play("snd_jack_clothequip.ogg", ply:GetPos(), 50, math.random(90, 110))
-
 	elseif not(TargetEntity:IsConstrained()) and CanPickup(TargetEntity) then
 		JMod.UpdateInv(ply)
 		local RoomLeft = math.floor((ply.JModInv.maxVolume) - (ply.JModInv.volume))
@@ -510,28 +518,12 @@ function JMod.EZ_GrabItem(ply, cmd, args)
 			local IsResources = false
 
 			if TargetEntity.IsJackyEZresource then
-				local Amt = tonumber(args[2])
-				if not Amt then
-					if ply:KeyDown(IN_SPEED) then
-						Amt = 9e9
-					else
-						net.Start("JMod_ItemInventory")
-							net.WriteEntity(TargetEntity)
-							net.WriteString("take_res")
-							net.WriteTable({})
-						net.Send(ply)
-
-						return 
-					end
-				end
-
-				Amt = math.floor(Amt or TargetEntity:GetEZsupplies(TargetEntity.EZsupplies))
-				RoomWeNeed = math.min(Amt * ResourceWeight, RoomLeft)
+				RoomWeNeed = math.min((TargetEntity:GetEZsupplies(TargetEntity.EZsupplies) or 0) * ResourceWeight, RoomLeft)
 				IsResources = true
 			end
 			
 			if (RoomWeNeed ~= nil) then
-				if (RoomWeNeed <= RoomLeft) then
+				if (RoomWeNeed <= RoomLeft) then 
 					local Added = JMod.AddToInventory(ply, (IsResources and {TargetEntity, RoomWeNeed / ResourceWeight}) or TargetEntity)
 					--
 					if not(Added) then

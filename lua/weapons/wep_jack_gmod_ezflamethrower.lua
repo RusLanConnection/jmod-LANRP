@@ -62,10 +62,18 @@ function SWEP:Initialize()
 			self.ShowWorldModel = false
 		end
 	end)--]]
+
+	if SERVER then
+		timer.Simple(0, function()
+			local ArmorItem = self:GetOwner().EZarmor.items[self.EZarmorID]
+			self:SetFuel(ArmorItem.chrg.fuel)
+		end)
+	end
+
 	self:Deploy()
 
 	--self:SetGas(0)
-	self:SetFuel(0)
+	
 end
 
 function SWEP:PreDrawViewModel(vm, wep, ply)
@@ -242,8 +250,8 @@ function SWEP:PrimaryAttack()
 	self:SetNextPrimaryFire(Time + NextAttackTime)
 
 	if SERVER then
-		local Fuel, --[[Gas,]] State = self:GetFuel(), --[[self:GetGas(),]] self:GetState()
-		local HasFuel = (Fuel > 0) --[[and (Gas > 0)]]
+		local Fuel, State = self:GetFuel(), --[[self:GetGas(),]] self:GetState()
+		local HasFuel = (Fuel > 0)
 
 		if not(HasFuel) then
 			self:Cease()
@@ -458,7 +466,7 @@ end
 function SWEP:Deploy()
 	if not IsValid(self:GetOwner()) then return end
 	if SERVER then
-		if self.EZarmorID and not(self:GetOwner().EZarmor and self:GetOwner().EZarmor.items[self.EZarmorID]) then
+		if self.EZarmorID and not(self:GetOwner().EZarmor and self:GetOwner().EZarmor.items[self.EZarmorID]) then	
 			SafeRemoveEntity(self)
 		end
 		JMod.Hint(self:GetOwner(), "flamethrower ignite")
@@ -518,6 +526,7 @@ function SWEP:Think()
 	end
 
 	if SERVER then
+		--print(self:GetFuel())
 		if ((State == STATE_FLAMIN) and (self:GetOwner():IsPlayer() and not self:GetOwner():KeyDown(IN_ATTACK))) or ((State > STATE_NOTHIN) and (self.NextExtinguishTime < Time)) then
 			if self:GetOwner():IsPlayer() and self:GetOwner():KeyDown(IN_ATTACK2) then
 				self:SetState(STATE_IGNITIN)
@@ -531,7 +540,7 @@ function SWEP:Think()
 		end
 		if self.EZarmorID and self:GetOwner().EZarmor and self:GetOwner().EZarmor.items[self.EZarmorID] then
 			local ArmorItem = self:GetOwner().EZarmor.items[self.EZarmorID]
-			self:SetFuel(ArmorItem.chrg.fuel)
+			--self:SetFuel(ArmorItem.chrg.fuel)
 			--self:SetGas(ArmorItem.chrg.gas)
 		end
 	end

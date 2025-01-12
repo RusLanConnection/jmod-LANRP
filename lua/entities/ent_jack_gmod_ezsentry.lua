@@ -1,4 +1,4 @@
-﻿-- Jackarunda 2021
+-- Jackarunda 2021
 AddCSLuaFile()
 ENT.Type = "anim"
 ENT.Base = "ent_jack_gmod_ezmachine_base"

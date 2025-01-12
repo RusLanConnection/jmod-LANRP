@@ -1,4 +1,4 @@
-﻿local EquipSounds = {"snds_jack_gmod/equip1.ogg", "snds_jack_gmod/equip2.ogg", "snds_jack_gmod/equip3.ogg", "snds_jack_gmod/equip4.ogg", "snds_jack_gmod/equip5.ogg"}
+local EquipSounds = {"snds_jack_gmod/equip1.ogg", "snds_jack_gmod/equip2.ogg", "snds_jack_gmod/equip3.ogg", "snds_jack_gmod/equip4.ogg", "snds_jack_gmod/equip5.ogg"}
 
 local function IsDamageThisType(dmg, typ)
 	if type(typ) ~= "number" then return false end
@@ -298,7 +298,7 @@ function LocationalDmgHandling(ply, hitgroup, dmg)
 	else
 		Mul = Mul * AmmoHPmul
 	end
-	
+
 	dmg:ScaleDamage(Mul)
 
 	return Mul
@@ -508,8 +508,12 @@ function JMod.RemoveArmorByID(ply, ID, broken)
 		ply.EZarmor.bodygroups = nil
 	end
 
+	PrintTable(ply.EZarmor)
+
 	ply.EZarmor.items[ID] = nil
 	
+	PrintTable(ply.EZarmor)
+
 	local StowItems = not(broken) and Specs.storage and IsValid(Ent)
 
 	local RemovedItems = JMod.UpdateInv(ply, StowItems, true)
@@ -570,7 +574,7 @@ function JMod.EZ_Equip_Armor(ply, nameOrEnt)
 		NewArmorID = nameOrEnt.EZID
 		NewArmorDurability = nameOrEnt.Durability or NewArmorSpecs.dur
 		NewArmorColor = nameOrEnt:GetColor()
-		NewArmorCharges = nameOrEnt.ArmorCharges
+		NewArmorCharges = nameOrEnt.ArmorCharges	
 		nameOrEnt:Remove()
 	else
 		NewArmorSpecs = JMod.ArmorTable[NewArmorName]

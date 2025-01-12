@@ -11,9 +11,9 @@ ENT.AdminOnly = false
 ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 --
 ENT.ThinkRate = 2
-ENT.AffectRange = 250
-ENT.MaxLife = 120
-ENT.MaxVel = 100
+ENT.AffectRange = 300
+ENT.MaxLife = 50
+ENT.MaxVel = 200
 --
 
 if SERVER then
@@ -69,7 +69,7 @@ if SERVER then
 		local SelfPos, Time = self:GetPos(), CurTime()
 		local RandDir = VectorRand(-6, 6)
 		RandDir.z = RandDir.z * .5
-		local Force = RandDir + (JMod.Wind * 4) + Vector(0, 0, -8)
+		local Force = RandDir + (JMod.Wind * 5) + Vector(0, 0, -8)
 
 		for key, obj in pairs(ents.FindInSphere(SelfPos, self.AffectRange)) do
 			if math.random(1, 2) == 1 and not (obj == self) and self:CanSee(obj) then
@@ -82,18 +82,30 @@ if SERVER then
 				end
 			end
 		end
+
+		for key, obj in pairs(ents.FindInSphere(SelfPos, self.AffectRange)) do
+			local distanceBetween = SelfPos:DistToSqr(obj:GetPos())
+
+			if obj != self and obj:GetClass() == self:GetClass() then
+				if distanceBetween < 175^2 then
+					local Vec = (obj:GetPos()-SelfPos):GetNormalized()
+					Force= Force - Vec * 32
+				end
+			end
+
+		end
 	
 		-- apply acceleration
-		self.CurVel = self.CurVel + Force / ThinkRateHz
+		self.CurVel = self.CurVel + Force / 0.5
 
 		-- apply air resistance
-		--self.CurVel = self.CurVel / 1.5
+		self.CurVel = self.CurVel / 1.5
 
 		-- apply max velocity
 		self.CurVel = self.CurVel:GetNormalized() * math.min(self.CurVel:Length(), self.MaxVel)
 
 		-- observe current velocity
-		local NewPos = SelfPos + self.CurVel / ThinkRateHz
+		local NewPos = SelfPos + self.CurVel 
 
 		-- make sure we're not gonna hit something. If so, bounce
 		local MoveTrace = util.TraceLine({
@@ -120,11 +132,16 @@ elseif CLIENT then
 	local DebugMat = Material("sprites/mat_jack_jackconfetti")
 
 	function ENT:Initialize()
-		self.Col = Color(math.random(225,235),255,math.random (80,90))
+		self.Col = Color(math.random(225,235),255,math.random(80,90))
 		self.Visible = true
 		self.Show = true
-		self.siz = 5
+		self.siz = 0.01
 		self.RenderPos = self:GetPos()
+		self.Opacity = 0
+
+		self.DieTime = CurTime() + GetLifeTimeNet()
+
+		self.Diffuse = 2
 
 		timer.Simple(2, function()
 			if IsValid(self) then
@@ -138,6 +155,25 @@ elseif CLIENT then
 		self:SetModelScale(2)
 	end
 
+	function ENT:Think()
+		local Time = CurTime()
+
+		if self.TimeDiffuse == nil or Time >= self.TimeDiffuse then
+			for k,gas in ipairs(ents.FindInSphere(self:GetPos(), 700)) do
+				local distanceBetween = self:GetPos():DistToSqr(gas:GetPos())
+				if gas != self and gas:GetClass() == self:GetClass() then
+					if distanceBetween >= 600^2 then
+						self.Diffuse = 1
+					else
+						self.Diffuse = 3
+					end
+				end
+				
+				self.TimeDiffuse = Time + 1
+			end
+		end
+	end
+
 	function ENT:DrawTranslucent()
 		self.DebugShow = LocalPlayer().EZshowGasParticles or false
 		if self.DebugShow then
@@ -147,18 +183,32 @@ elseif CLIENT then
 
 		local Time = CurTime()
 
+		local OpacityTarget
+
 		if self.NextVisCheck < Time then
 			self.NextVisCheck = Time + 1
 			self.Show = self.Visible and 1 / FrameTime() > 50
 		end
 		self.Show = self.Visible
 
-		if self.Show then
+		if (self.DieTime - 10) < Time then
+			OpacityTarget = 0 
+		else
+			OpacityTarget = 56 * self.Diffuse
+		end
+
+		local SizeTarget = 500
+
+		self.siz = math.Round( Lerp(FrameTime() * 10, self.siz, SizeTarget), 0)
+
+		self.Opacity = math.Round(Lerp(FrameTime() * 4.5, self.Opacity, OpacityTarget), 0)
+
+		if self.Opacity > 0 and self.Show then
 			local SelfPos = self:GetPos()
 			render.SetMaterial(Mat)
-			render.DrawSprite(self.RenderPos, self.siz, self.siz, Color(self.Col.r, self.Col.g, self.Col.b, 200))
+			render.DrawSprite(self.RenderPos, self.siz, self.siz, Color(self.Col.r, self.Col.g, self.Col.b, self.Opacity))
 			self.RenderPos = LerpVector(FrameTime() * 1, self.RenderPos, SelfPos)
-			self.siz = math.Clamp(self.siz + FrameTime() * 200, 0, 500)
+			--self.siz = math.Clamp(self.siz + FrameTime() * 200, 0, 500)
 		end
 	end
 end

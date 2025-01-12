@@ -1,4 +1,4 @@
-﻿-- these are custom things that can be "put on" a player, separate from armor
+-- these are custom things that can be "put on" a player, separate from armor
 local Slots = {"glowsticks"}
 
 -- slot for glowsticky things
@@ -149,6 +149,9 @@ hook.Add("Think", "JModEquippableThink", function()
 		NextServerThink = Time + .1
 
 		for k, ply in player.Iterator() do
+                
+            --if not IsValid(ply) then return end
+                
 			if ply:Alive() and ply.EZequippables then
 				for slot, info in pairs(ply.EZequippables) do
 					local EquippableSpecs, TimeLeft = JMod.Equippables[info.nam], info.tim - Time

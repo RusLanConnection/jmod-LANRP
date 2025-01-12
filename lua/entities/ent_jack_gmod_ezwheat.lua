@@ -1,4 +1,4 @@
-﻿AddCSLuaFile()
+AddCSLuaFile()
 
 ENT.Type = "anim"
 ENT.PrintName = "EZ Wheat"
@@ -106,7 +106,6 @@ if(SERVER)then
 			if (self:WaterLevel() > 0) then self:Remove() return end
 			self.EZinstalled = true
 			--util.Decal("EZtreeRoots", Tr.HitPos + Tr.HitNormal, Tr.HitPos - Tr.HitNormal)
-			timer.Simple(.1, function()
 				if (IsValid(self)) then
 					local HitAngle = Tr.HitNormal:Angle()
 					HitAngle:RotateAroundAxis(HitAngle:Right(), -90)
@@ -118,7 +117,6 @@ if(SERVER)then
 					self:GetPhysicsObject():Sleep()
 					JMod.Hint(JMod.GetEZowner(self), "tree growth")
 				end
-			end)
 		else
 			self:Remove()
 		end
@@ -127,7 +125,7 @@ if(SERVER)then
 	function ENT:Think()
 		--jprint(self.Helf, self.EZinstalled, self.GroundWeld)
 		if (self.Helf <= 0) then self:Destroy() return end
-		if (self.EZinstalled and not(IsValid(self.GroundWeld))) then self:Destroy() return end
+		if self.EZinstalled and not IsValid(self.GroundWeld) then print(IsValid(self.GroundWeld)) self:Destroy() return end
 		local Time, SelfPos = CurTime(), self:GetPos()
 		if (self.NextGrowThink < Time) then
 			self.NextGrowThink = Time + math.random(9, 11)

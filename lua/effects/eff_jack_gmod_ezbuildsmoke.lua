@@ -1,4 +1,4 @@
-﻿-- Jackarunda 2021
+-- Jackarunda 2021
 local Sprites = {"particle/smokestack", "particles/smokey", "particle/particle_smokegrenade", "sprites/mat_jack_smoke1", "sprites/mat_jack_smoke2", "sprites/mat_jack_smoke3"}
 
 function EFFECT:Init(data)

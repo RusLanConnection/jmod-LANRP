@@ -1,4 +1,4 @@
-﻿local ParticleColors = {Color(150, 150, 150), Color(60, 40, 20)}
+local ParticleColors = {Color(150, 150, 150), Color(60, 40, 20)}
 local FleckSprites = {"effects/fleck_cement1", "effects/fleck_cement2"}
 local SmokeSprite = "particle/smokestack"
 
@@ -8,7 +8,7 @@ function EFFECT:Init(data)
 	local Emitter = ParticleEmitter(Origin)
 
 	-- solid dirt/rock particles that spray out haphazardly
-	for i = 1, 20 do
+	for i = 1, 5 do
 		local Particle = Emitter:Add(table.Random(FleckSprites), Origin + VectorRand() * 5)
 
 		if Particle then
@@ -55,7 +55,7 @@ function EFFECT:Init(data)
 	end
 
 	-- solid dirt/rock particles that rise with the same speed as the auger's flutes
-	for i = 1, 10 do
+	for i = 1, 5 do
 		local Particle = Emitter:Add(table.Random(FleckSprites), Origin + VectorRand() * 5)
 
 		if Particle then

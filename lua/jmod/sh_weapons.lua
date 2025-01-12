@@ -262,7 +262,18 @@ JMod.WeaponTable = {
 		swep = "wep_jack_gmod_combatknife",
 		ent = "ent_jack_gmod_ezweapon_combatknife",
 		Spawnable = false
-	}
+	},
+
+
+
+	["Kar-98k"] = {
+		mdl = "models/weapons/w_k98k.mdl",
+		swep = "wep_lanrp_jmod_kar98k",
+		ent = "ent_lanrp_jmod_kar98k",
+		Spawnable = true,
+		AdminOnly = false,
+		Category = "JMod - EZ Weapons"
+	},
 }
 
 JMod.AmmoTable = {

@@ -1,4 +1,4 @@
-﻿-- Jackarunda 2021
+-- Jackarunda 2021
 AddCSLuaFile()
 ENT.Type = "anim"
 ENT.Author = "Jackarunda"
@@ -86,7 +86,8 @@ if SERVER then
 		end)
 
 		---
-		Contents:SetNoDraw(true)
+		--Contents:SetNoDraw(true)
+        Contents:SetRenderMode( RENDERMODE_NONE )
 		Contents:SetNotSolid(true)
 		ContentsPhys:Sleep()
 		if Contents.IsJackyEZmachine then --EZ machine compat
@@ -208,7 +209,8 @@ if SERVER then
 		if IsValid(Contents) then
 			Contents:SetPos(Pos + Vector(0, 0, 30))
 			Contents:SetAngles(Ang)
-			Contents:SetNoDraw(false)
+			--Contents:SetNoDraw(false)
+            Contents:SetRenderMode( RENDERMODE_NORMAL )
 			Contents:SetNotSolid(false)
 			local Phys = Contents:GetPhysicsObject()
 

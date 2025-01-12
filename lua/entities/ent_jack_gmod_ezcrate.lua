@@ -114,12 +114,8 @@ if SERVER then
 	function ENT:CalcWeight()
 		self.MaxResource = 100 * 20 * JMod.Config.ResourceEconomy.MaxResourceMult
 		local Frac = self:GetResource() / self.MaxResource
-		self:GetPhysicsObject():SetMass(100 + Frac * 300)
+		self:GetPhysicsObject():SetMass(100 + Frac)
 		self:GetPhysicsObject():Wake()
-		if (WireLib) then
-			WireLib.TriggerOutput(self, "Type", self:GetResourceType())
-			WireLib.TriggerOutput(self, "Amount Left", self:GetResource())
-		end
 	end
 
 	function ENT:OnTakeDamage(dmginfo)

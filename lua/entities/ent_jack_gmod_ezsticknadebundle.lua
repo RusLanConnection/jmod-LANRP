@@ -33,6 +33,10 @@ if SERVER then
 		end
 	end
 
+	function ENT:PhysicsCollide( data, phys )
+		if data.Speed > 100 and self:GetState() == JMod.EZ_STATE_ARMED and string.find(data.HitEntity:GetClass(), "lvs") then self:Detonate() end
+	end
+
 	function ENT:Detonate()
 		if self.Exploded then return end
 		self.Exploded = true
@@ -96,7 +100,7 @@ if SERVER then
 					timer.Simple(0, function()
 						local ZaWarudo = game.GetWorld()
 						local Infl, Att = (IsValid(self) and self) or ZaWarudo, (IsValid(self) and IsValid(self.EZowner) and self.EZowner) or (IsValid(self) and self) or ZaWarudo
-						util.BlastDamage(Infl, Att, SelfPos, 125 * PowerMult, 180 * PowerMult)
+						util.BlastDamage(Infl, Att, SelfPos, 125 * PowerMult, 300)
 						self:Remove()
 					end)
 				end

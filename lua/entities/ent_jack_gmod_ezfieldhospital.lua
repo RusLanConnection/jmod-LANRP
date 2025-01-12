@@ -310,7 +310,7 @@ if(SERVER)then
 				self.Patient:PrintMessage(HUD_PRINTCENTER, "curing poisoning")
 			else
 				if Infection > 1 then
-					self.Patient.EZvirus.Severity = math.max(Infection - self.HealEfficiency * JMod.Config.Machines.MedBay.HealMult * 3, 1)
+					self.Patient.EZvirus.Severity = math.max(Infection - self.HealEfficiency * JMod.Config.Machines.MedBay.HealMult * 5, 1)
 					self.Patient:PrintMessage(HUD_PRINTCENTER, "boosting immune system")
 				else
 					self.Patient:PrintMessage(HUD_PRINTCENTER, "repairing damage")

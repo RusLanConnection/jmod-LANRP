@@ -1,4 +1,4 @@
-﻿AddCSLuaFile()
+AddCSLuaFile()
 
 ENT.Type = "anim"
 ENT.PrintName = "EZ Tree"
@@ -113,32 +113,30 @@ if(SERVER)then
 			if (self:WaterLevel() > 0) then self:Remove() return end
 			self.EZinstalled = true
 			util.Decal("EZtreeRoots", Tr.HitPos + Tr.HitNormal, Tr.HitPos - Tr.HitNormal)
-			timer.Simple(.1, function()
-				if (IsValid(self)) then
-					--[[local HitAngle = Tr.HitNormal:Angle()
-					HitAngle:RotateAroundAxis(HitAngle:Right(), -90)
-					HitAngle:RotateAroundAxis(Tr.HitNormal, math.random(0,  360))
-					self:SetAngles(HitAngle)--]]
-					self:SetAngles(Angle(0, math.random(0, 360, 0)))
-					self:SetPos(Tr.HitPos + Vector(0, 0, -2))
-					if Tr.Entity == game.GetWorld() then
-						self:GetPhysicsObject():EnableMotion(false)
-						--self.GroundWeld = constraint.Weld(self, Tr.Entity, 0, 0, 50000, true)
-					else
-						self.GroundWeld = constraint.Weld(self, Tr.Entity, 0, 0, 50000, true)
-						self:GetPhysicsObject():Sleep()
-					end
-					JMod.Hint(JMod.GetEZowner(self), "tree growth")
-				end
-			end)
+			--[[local HitAngle = Tr.HitNormal:Angle()
+			HitAngle:RotateAroundAxis(HitAngle:Right(), -90)
+			HitAngle:RotateAroundAxis(Tr.HitNormal, math.random(0,  360))
+			self:SetAngles(HitAngle)--]]
+			self:SetAngles(Angle(0, math.random(0, 360, 0)))
+			self:SetPos(Tr.HitPos + Vector(0, 0, -2))
+			if Tr.Entity == game.GetWorld() then
+				self:GetPhysicsObject():EnableMotion(false)
+				--self.GroundWeld = constraint.Weld(self, Tr.Entity, 0, 0, 50000, true)
+			else
+				self.GroundWeld = constraint.Weld(self, Tr.Entity, 0, 0, 50000, true)
+				self:GetPhysicsObject():Sleep()
+			end
+            
+			JMod.Hint(JMod.GetEZowner(self), "tree growth")
+                
 		else
 			self:Remove()
 		end
 	end
 
-	function ENT:Think()
+	function ENT:Think()        
 		if (self.Helf <= 0) then self:Destroy() return end
-		if (self.EZinstalled and not(IsValid(self.GroundWeld) or not self:GetPhysicsObject():IsMotionEnabled())) then self:Destroy() return end
+		if self.EZinstalled and (self:GetPhysicsObject():IsMotionEnabled() and not IsValid(self.GroundWeld)) then self:Destroy() return end
 		local Time, SelfPos, Owner, Vel = CurTime(), self:GetPos(), self.EZowner, self:GetPhysicsObject():GetVelocity()
 		if (self.NextGrowThink < Time) then
 			self.NextGrowThink = Time + math.random(9, 11)

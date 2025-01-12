@@ -1,4 +1,4 @@
-﻿-- Jackarunda 2021
+-- Jackarunda 2021
 AddCSLuaFile()
 ENT.Base = "ent_jack_gmod_ezbomb"
 ENT.Author = "Jackarunda"
@@ -35,8 +35,8 @@ if SERVER then
 		Boom:Spawn()
 		Boom:Fire("explode", 0)
 		---
-		for i = 1, 100 do
-			timer.Simple(i / 120, function()
+		for i = 1, 200 do
+			timer.Simple(i / 100, function()
 				local Gas = ents.Create("ent_jack_gmod_ezchlorineparticle")
 				Gas:SetPos(SelfPos)
 				JMod.SetEZowner(Gas, Owner)

@@ -313,9 +313,11 @@ elseif CLIENT then
 		local Time = CurTime()
 		Ang:RotateAroundAxis(Ang:Up(), 90)
 		--self:DrawModel()
-		self.Mdl:SetRenderOrigin(Pos + Ang:Up() * 1.5 - Ang:Right() * 0 - Ang:Forward() * 1)
-		self.Mdl:SetRenderAngles(Ang)
-		self.Mdl:DrawModel()
+		if IsValid(self.Mdl) then
+			self.Mdl:SetRenderOrigin(Pos + Ang:Up() * 1.5 - Ang:Right() * 0 - Ang:Forward() * 1)
+			self.Mdl:SetRenderAngles(Ang)
+			self.Mdl:DrawModel()
+		end
 
 		if self:GetState() == STATE_LAUNCHED then
 			self.BurnoutTime = self.BurnoutTime or Time + 1

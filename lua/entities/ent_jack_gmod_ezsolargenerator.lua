@@ -1,4 +1,4 @@
-﻿AddCSLuaFile()
+AddCSLuaFile()
 
 ENT.Type = "anim"
 ENT.PrintName = "EZ Solar Panel"
@@ -39,6 +39,8 @@ if(SERVER)then
 		self.NextUse = 0
 		self.PowerSLI = 0 -- Power Since Last Interaction
 		self.MaxPowerSLI = 500
+        
+        self:Upgrade(2)
 	end
 
 	function ENT:SetupWire()

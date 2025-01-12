@@ -466,7 +466,7 @@ if(SERVER)then
 	function ENT:TryLoadResource(typ, amt)
 		if(amt <= 0)then return 0 end
 		local Time = CurTime()
-		if (self.NextRefillTime > Time) or (typ == "generic") then return 0 end
+		if self.NextRefillTime == nil or (self.NextRefillTime > Time) or (typ == "generic") then return 0 end
 		for _,v in pairs(self.EZconsumes)do
 			if(typ == v)then
 				local Accepted = 0

@@ -1,4 +1,4 @@
-﻿JMod.Wind = Vector(0, 0, 0)
+JMod.Wind = Vector(0, 0, 0)
 local force_workshop = CreateConVar("jmod_forceworkshop", 1, {FCVAR_ARCHIVE}, "Force clients to download JMod+its content? (requires a restart upon change)")
 
 if force_workshop:GetBool() then
@@ -253,8 +253,8 @@ end
 function JMod.TryVirusInfectInRange(host, att, hostFaceProt, hostSkinProt)
 	local Range, SelfPos = 300 * JMod.Config.Particles.VirusSpreadMult, host:GetPos()
 
-	if hostFaceProt > 0 or hostSkinProt > 0 then
-		Range = Range * (1 - (hostFaceProt + hostSkinProt) / 2)
+	if hostFaceProt > 0 then
+		Range = Range * (1 - (hostFaceProt) / 1)
 	end
 
 	if Range <= 0 then return end
@@ -271,8 +271,10 @@ function JMod.TryVirusInfectInRange(host, att, hostFaceProt, hostSkinProt)
 			---
 			local VictimFaceProtection, VictimSkinProtection = JMod.GetArmorBiologicalResistance(obj, DMG_RADIATION)
 
-			if VictimFaceProtection > 0 or VictimSkinProtection > 0 then
-				Chance = Chance * (1 - (VictimFaceProtection + VictimSkinProtection) / 2)
+			print(VictimFaceProtection)
+
+			if VictimFaceProtection > 0 then
+				Chance = 0 --Chance * (1 - (VictimFaceProtection) / 1)
 			end
 
 			if Chance > 0 then
@@ -324,7 +326,7 @@ local function VirusHostThink(dude)
 			dude.EZvirus.InfectionWarned = true
 
 			if dude.PrintMessage then
-				dude:PrintMessage(HUD_PRINTTALK, "You've contracted the JMod virus. Get medical attention, eat food, and avoid contact with others.")
+				dude:PrintMessage(HUD_PRINTTALK, "Вы заразились трупным вирусом. Обратитесь за медицинской помощью, много ешьте и избегайте контактов с другими людьми.")
 			end
 		end
 
@@ -335,7 +337,7 @@ local function VirusHostThink(dude)
 			dude.EZvirus.Immune = true
 
 			if dude.PrintMessage then
-				dude:PrintMessage(HUD_PRINTTALK, "You are now immune to the JMod virus.")
+				dude:PrintMessage(HUD_PRINTTALK, "Теперь у вас есть иммунитет к вирусу.")
 			end
 		end
 	end
@@ -1097,16 +1099,28 @@ hook.Add("PlayerCanSeePlayersChat", "JMOD_PLAYERSEECHAT", function(text, teamOnl
 	
     local distance = listener:GetPos():Distance(talker:GetPos())
 
-    if distance > maxDistance then
-        return JMod.PlayersCanComm(listener, talker, text)
+    if distance < maxDistance then
+        return true
 	else
-		return true
+		return JMod.PlayersCanComm(listener, talker, false, text)
+		
 	end
 end)
 
---[[hook.Add("PlayerCanHearPlayersVoice", "JMOD_PLAYERHEARVOICE", function(listener, talker)
-	if talker.EZarmor and talker.EZarmor.effects.teamComms then return JMod.PlayersCanComm(listener, talker) end
-end)]]
+hook.Add("PlayerCanHearPlayersVoice", "JMOD_PLAYERHEATVOICE", function(listener, talker)
+	local maxDistance = GetConVar("proximity_radius"):GetInt()
+    local proximityEnabled = GetConVar("proximity_enabled"):GetInt()
+	
+    local distance = listener:GetPos():Distance(talker:GetPos())
+
+    if distance < maxDistance then
+		return true, true
+	else
+		return JMod.PlayersCanComm(listener, talker, true)
+    end
+
+    --return true, true
+end)
 
 local function ResetBouyancy(ply, ent)
 	if ent.EZbuoyancy then

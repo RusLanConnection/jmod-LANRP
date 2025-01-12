@@ -71,7 +71,7 @@ local function sendSpecialChatNet(talker, listener, text)
 end
 
 --
-function JMod.PlayersCanComm(listener, talker, text)
+function JMod.PlayersCanComm(listener, talker, voice, text)
 	if listener == talker then return true end
 
 	local listenerInRadio = false 
@@ -97,25 +97,62 @@ function JMod.PlayersCanComm(listener, talker, text)
 		end
 	end
 
+	--[[if listenerInRadio and talkerInRadio then
+		talker:SetDSP(56)
+		listener:SetDSP(56)
+	else
+		listener:SetDSP(0)
+		talker:SetDSP(0)
+	end]]
+
 	if talker:GetSquadID() == -1 or listener:GetSquadID() == -1 then return false end
 
-	if IsValid(radio) and talkerInRadio and (talker:GetSquadID() == listener:GetSquadID() or SquadMenu:GetSquad(talker:GetSquadID()).Alliance[listener:GetSquadID()]) then
-		radio:EmitSound("snds_jack_gmod/radio_static" .. math.random(1, 3) .. ".ogg", 75, math.random(50, 90))
+	if voice then
+		if IsValid(radio) and talkerInRadio and (talker:GetSquadID() == listener:GetSquadID() or SquadMenu:GetSquad(talker:GetSquadID()).Alliance[listener:GetSquadID()]) then
+			
+			if radio.soundtime == nil or radio.soundtime <= CurTime() then
+				radio:EmitSound("LANRP/radio/radio" .. math.random(1, 4) .. ".ogg", 75, math.random(70, 120))
+
+				radio.soundtime = CurTime() + 0.3
+			end
+		end
+	else
+		if IsValid(radio) and talkerInRadio and (talker:GetSquadID() == listener:GetSquadID() or SquadMenu:GetSquad(talker:GetSquadID()).Alliance[listener:GetSquadID()]) then
+			
+			if radio.soundtime == nil or radio.soundtime <= CurTime() then
+				radio:EmitSound("LANRP/radio/radio" .. math.random(1, 4) .. ".ogg", 75, math.random(70, 120))
+
+				radio.soundtime = CurTime() + 0.3
+			end
+		end
 	end
 
 	if not listenerInRadio or not talkerInRadio or radio == nil then return false end
 	
 	if listenerInRadio and talkerInRadio and talker:GetSquadID() == listener:GetSquadID() then
-		sendSpecialChatNet(talker, listener, text)
 		
-		return false
+		if voice then
+			return true
+		else
+			sendSpecialChatNet(talker, listener, text)
+			
+			return false
+		end
 	end
 
 	if listenerInRadio and talkerInRadio and SquadMenu:GetSquad(talker:GetSquadID()).Alliance[listener:GetSquadID()] then
-		sendSpecialChatNet(talker, listener, text)
 		
-		return false
+		if voice then
+			return true
+		else
+			sendSpecialChatNet(talker, listener, text)
+			
+			return false
+		end
+
 	end
+
+	return false
 end
 
 ---

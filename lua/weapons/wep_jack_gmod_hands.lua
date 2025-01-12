@@ -1,4 +1,4 @@
-﻿if SERVER then
+if SERVER then
 	AddCSLuaFile()
 	SWEP.Weight = 5
 	SWEP.AutoSwitchTo = false
@@ -133,7 +133,7 @@ function SWEP:CanPickup(ent)
 	--if pickupWhiteList[class] then return true end
 	if CLIENT then return true end
 	if ent:IsPlayerHolding() then return false end
-	if IsValid(ent:GetPhysicsObject()) and ent:GetPhysicsObject():IsMotionEnabled() then return true end
+	if IsValid(ent:GetPhysicsObject()) --[[and ent:GetPhysicsObject():IsMotionEnabled()]] then return true end
 
 	return false
 end
@@ -162,16 +162,41 @@ function SWEP:SecondaryAttack()
 			if Dist < self.ReachDistance then
 				sound.Play("Flesh.ImpactSoft", self:GetOwner():GetShootPos(), 65, math.random(90, 110))
 				self:GetOwner():SetVelocity(self:GetOwner():GetAimVector() * 20)
-				tr.Entity:SetVelocity(-self:GetOwner():GetAimVector() * 50)
+				tr.Entity:SetVelocity(self:GetOwner():GetAimVector() * 50)
 				self:SetNextSecondaryFire(CurTime() + .25)
 			end
 		end
 	end
 end
 
+local DontUnfreeze = {
+	["build_prop"] = true,
+	["sent_conveyor"] = true,
+	["ent_rus_jsmod_pipe"] = true,
+	["ent_rus_gmod_ezpowerline"] = true,
+	["ent_jack_gmod_ezsand"] = true,
+}
+
 function SWEP:ApplyForce()
 	local target = self:GetOwner():GetAimVector() * self.CarryDist + self:GetOwner():GetShootPos() + Vector(0, 0, 5)
 	local phys = self.CarryEnt:GetPhysicsObjectNum(self.CarryBone)
+
+	if self.CarryEnt:IsRagdoll() then
+		local physCount = self.CarryEnt:GetPhysicsObjectCount()
+		for i = 0, physCount - 1 do
+			local phys = self.CarryEnt:GetPhysicsObjectNum(i)
+			if IsValid(phys) then
+				phys:EnableMotion(true)
+				phys:Wake()
+			end
+		end
+	elseif not DontUnfreeze[self.CarryEnt:GetClass()] then
+		local phys = self.CarryEnt:GetPhysicsObject()
+		if IsValid(phys) then
+			phys:EnableMotion(true)
+			phys:Wake()
+		end
+	end
 
 	if IsValid(phys) then
 		local TargetPos = phys:GetPos()
@@ -197,7 +222,7 @@ function SWEP:ApplyForce()
 		end
 
 		vec:Normalize()
-		local avec, velo = vec * len^1.5, phys:GetVelocity() - self:GetOwner():GetVelocity()
+		local avec, velo = vec * len ^ 1.5, phys:GetVelocity() - self:GetOwner():GetVelocity()
 		local Force = (avec - velo / 2) * mul
 		local ForceNormal = Force:GetNormalized()
 		local ForceMagnitude = Force:Length()
@@ -442,7 +467,7 @@ function SWEP:Reload()
 			local Tar = self:GetCarrying()
 			local ply = self:GetOwner()
 			
-			JMod.EZ_GrabItem(ply, nil, {Tar:EntIndex()})
+			JMod.EZ_GrabItem(ply, nil, {Tar})
 		else
 			--[[if self:GetOwner():HasWeapon("wep_jack_gmod_eztoolbox") then
 				local ToolBox = self:GetOwner():GetWeapon("wep_jack_gmod_eztoolbox")

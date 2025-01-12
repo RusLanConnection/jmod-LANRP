@@ -201,8 +201,8 @@ if(SERVER)then
 
 				if self:GetWater() <= 0 then
 					if self:GetState() > 0 then
-						local Loaded = self:LoadFromDonor(JMod.EZ_RESOURCE_TYPES.OIL, OilConsumeAmt * 5)
-						if Loaded < OilConsumeAmt and (Time - self.LastOilTime) >= 5 then
+						local Loaded = self:LoadFromDonor(JMod.EZ_RESOURCE_TYPES.WATER, 5)
+						if Loaded < self:GetWater() - 1 and self.NextWaterLoseTime < Time then
 							self:TurnOff()
 							return 
 						end

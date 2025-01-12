@@ -1,4 +1,4 @@
-﻿-- this causes an object to rotate to point forward while moving, like a dart
+-- this causes an object to rotate to point forward while moving, like a dart
 function JMod.AeroDrag(ent, forward, mult, spdReq)
 	if constraint.HasConstraints(ent) then return end
 	if ent:IsPlayerHolding() then return end
@@ -927,6 +927,12 @@ function JMod.Rope(ply, origin, dir, width, strength, mat)
 	return Rope, RopeTr.Entity
 end
 
+local ConstrBLackList = {
+    ["ent_rus_gmod_ezpowerline"] = true,
+    ["ent_rus_jsmod_pipe"] = true,
+    ["build_prop"] = true,
+}
+
 function JMod.EZprogressTask(ent, pos, deconstructor, task, mult)
 	mult = mult or 1
 	local Time = CurTime()
@@ -1044,9 +1050,9 @@ function JMod.EZprogressTask(ent, pos, deconstructor, task, mult)
 				return "object is already unconstrained"
 			end
 		elseif task == "salvage" then
-			if ent:GetClass() == "build_prop" and (ent.Owner:GetSquadID() ~= deconstructor:GetSquadID()) then 
+			if ((ent:GetClass() == "build_prop") and (ent.Owner:GetSquadID() ~= deconstructor:GetSquadID())) or ent:IsWeapon() or ent:GetClass() == "ent_weapondrop" or ent:GetClass() == "ent_weapondrop" or scripted_ents.IsBasedOn(ent:GetClass(), "ent_jack_gmod_ezweapon") then 
 				return "you cannot salvage this "
-			elseif (constraint.HasConstraints(ent) or not Phys:IsMotionEnabled()) and ent:GetClass() ~= "build_prop" then
+			elseif (constraint.HasConstraints(ent) or not Phys:IsMotionEnabled() and not FrozenProps[ent]) and not ConstrBLackList[ent:GetClass()] then
 				return "object is constrained"
 			else
 				local Mass = (Phys:GetMass() * ent:GetPhysicsObjectCount()) ^ .8

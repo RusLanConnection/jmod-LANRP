@@ -1,4 +1,4 @@
-﻿-- Jackarunda 2021
+-- Jackarunda 2021
 AddCSLuaFile()
 ENT.Type = "anim"
 ENT.PrintName = "EZ Poison Gas"
@@ -18,6 +18,10 @@ ENT.MaxLife = 100
 ENT.MaxVel = 100
 --
 
+function ENT:SetupDataTables()
+	self:NetworkVar("Float", 1, "LifeTimeNet")
+end
+
 if SERVER then
 	function ENT:Initialize()
 		local Time = CurTime()
@@ -28,7 +32,13 @@ if SERVER then
 		self.NextDmg = Time + 5
 		self.CurVel = self.CurVel or VectorRand() * 10
 		self.AirResistance = 2
-		self:SetLifeTime(math.random(self.MaxLife * .5, self.MaxLife) * JMod.Config.Particles.PoisonGasLingerTime)
+
+		local lifetime = math.random(self.MaxLife * .5, self.MaxLife) * JMod.Config.Particles.PoisonGasLingerTime
+		
+		self:SetLifeTime(lifetime)
+
+		SetLifeTimeNet(lifetime)
+		
 		if self.CustomInit then
 			self:CustomInit()
 		end
@@ -158,7 +168,7 @@ if SERVER then
 		-- self:Extinguish()
 
 		-- YOU BETTER THINK AGAIN!
-		self:NextThink(Time + math.random(1 / ThinkRateHz, 1.5 / ThinkRateHz))
+		self:NextThink(Time + math.random(1, 2))
 		return true
 	end
 

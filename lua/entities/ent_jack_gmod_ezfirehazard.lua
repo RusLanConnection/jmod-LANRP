@@ -1,4 +1,4 @@
-﻿AddCSLuaFile()
+AddCSLuaFile()
 ENT.Type = "anim"
 ENT.Base = "base_anim"
 ENT.PrintName = "Fire Hazard"
@@ -104,6 +104,7 @@ if SERVER then
 		if ent:IsPlayer() then return true end
 		if ent:IsNPC() then return true end
 		if ent:IsNextBot() then return true end
+		if ent.LVS then return true end
 		local PhysicsMat = ent:GetMaterialType()
 
 		if FlammableMaterials[PhysicsMat] then
@@ -136,12 +137,12 @@ if SERVER then
 				self.NextSound = Time + math.Rand(.9, 1.1)
 				if (self.Intensity > self.MaxIntensity * .5) then
 					self:EmitSound(table.Random(self.FireSounds), 75, math.random(90, 110))
-					if (math.random(1, 2) == 1) then JMod.EmitAIsound(self:GetPos(), 300, .5, 8) end
+					--if (math.random(1, 2) == 1) then JMod.EmitAIsound(self:GetPos(), 300, .5, 8) end
 				end
 			end
 
 			if self.NextDamage < Time then
-				self.NextDamage = Time + 0.5
+				self.NextDamage = Time + 2
 				local Par, Att, Infl = self:GetParent(), JMod.GetEZowner(self), Inflictor(self)
 
 				if not IsValid(Att) then
@@ -207,10 +208,19 @@ if SERVER then
 					elseif not DamageBlacklist[v:GetClass()] --[[and IsValid(v:GetPhysicsObject())]] and JMod.VisCheck(self:GetPos(), v, self) then
 						local DistanceFactor = math.max( 1 - ( Pos:Distance( TheirPos ) / self.Range ), 0 ) ^ 1.5
 						
-						FireDam:SetDamage(self.Power * DistanceFactor)
-						v:TakeDamageInfo(FireDam)
+						if v.LVS then
+							if math.random(1, 50) == 1 then
+								FireDam:SetDamage(self.Power * DistanceFactor)
+								v:TakeDamageInfo(FireDam)
+							end
+						else
+							if math.random(1, 5) == 1 then
+								FireDam:SetDamage(self.Power * DistanceFactor)
+								v:TakeDamageInfo(FireDam)
+							end
+						end
 
-						if (ShouldIgnite(v)) and (math.random(1, 30) == 1) then
+						if (ShouldIgnite(v)) then
 							v:Ignite(math.random(8, 12) * Fraction, 0)
 						end
 					end

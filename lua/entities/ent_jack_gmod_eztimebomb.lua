@@ -1,4 +1,4 @@
-﻿AddCSLuaFile()
+AddCSLuaFile()
 ENT.Type = "anim"
 ENT.Author = "Jackarunda, TheOnly8Z"
 ENT.Category = "JMod - EZ Explosives"
@@ -248,7 +248,7 @@ if SERVER then
 
 		if self:GetState() == STATE_ARMED then
 			self:EmitSound("weapons/c4/c4_beep1.wav", 50, 100)
-			JMod.EmitAIsound(self:GetPos(), 200, 1, 8)
+			--JMod.EmitAIsound(self:GetPos(), 200, 1, 8)
 			self:SetTimer(self:GetTimer() - 1)
 
 			if self:GetTimer() <= 0 then

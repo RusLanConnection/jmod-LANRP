@@ -79,7 +79,7 @@ if SERVER then
 		local Alt = activator:KeyDown(JMod.Config.General.AltFunctionKey)
 		activator:PickupObject(self)
 
-		if Alt then
+		if Alt or self.forcegrab then
 			
 			local WepGetSlot = ents.Create(self.Specs.swep)
 			WepGetSlot:Spawn()

@@ -234,8 +234,7 @@ function JMod.BlastThatDoor(ent, vel)
 	sound.Play("Wood_Furniture.Break", Pozishun, 60, 100)
 	ent:Fire("unlock", "", 0)
 	ent:Fire("open", "", 0)
-	ent:SetNoDraw(true)
-	ent:SetNotSolid(true)
+	ent:Remove()
 
 	if Moddel and Pozishun and Ayngul then
 		local Replacement = ents.Create("prop_physics")
@@ -272,11 +271,6 @@ function JMod.BlastThatDoor(ent, vel)
 		end)
 
 		timer.Simple(30 * JMod.Config.Explosives.DoorBreachResetTimeMult, function()
-			if IsValid(ent) then
-				ent:SetNotSolid(false)
-				ent:SetNoDraw(false)
-			end
-
 			if IsValid(Replacement) then
 				Replacement:Remove()
 			end

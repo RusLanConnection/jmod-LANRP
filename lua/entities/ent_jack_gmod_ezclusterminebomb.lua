@@ -28,15 +28,17 @@ local STATE_BROKEN, STATE_OFF, STATE_ARMED = -1, 0, 1
 if SERVER then
 	concommand.Add("jmod_debug_cluster_minelayer", function(ply, cmd, args, argStr)
 		if not JMod.IsAdmin(ply) then return end
-		local SpawnPos = ply:GetEyeTrace().HitPos + Vector(0, 0, 5000)
-		local Bomb = ents.Create("ent_jack_gmod_ezhebomb")
+		local SpawnPos = ply:GetEyeTrace().HitPos + Vector(math.random(-1000, 1000), math.random(-1000, 1000), 5000)
+		local Bomb = ents.Create("prop_physics")
+		Bomb:SetModel("models/Gibs/HGIBS.mdl")
 		Bomb:SetPos(SpawnPos)
 		JMod.SetEZowner(Bomb, ply)
 		Bomb:Spawn()
 		Bomb:Activate()
-		Bomb:SetState(STATE_ARMED)
-		Bomb.Payload = "ent_jack_gmod_ezatmine"
-		Bomb.PayloadAmt = 2
+		--Bomb:Arm()
+		--Bomb:SetState(STATE_ARMED)
+		--Bomb.Payload = "ent_jack_gmod_ezatmine"
+		--Bomb.PayloadAmt = 2
 	end, nil, nil)
 
 	function ENT:Detonate()

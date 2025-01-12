@@ -1,4 +1,4 @@
-﻿player_manager.AddValidModel("JMod_HazMat", "models/bloocobalt/splinter cell/chemsuit_cod.mdl")
+player_manager.AddValidModel("JMod_HazMat", "models/bloocobalt/splinter cell/chemsuit_cod.mdl")
 player_manager.AddValidHands("JMod_HazMat", "models/bloocobalt/splinter cell/chemsuit_v.mdl", 0, "00000000")
 --[[ ArmorSlots
 
@@ -345,6 +345,51 @@ JMod.ArmorTable = {
 			pos = Vector(1.5, -2.5, .1),
 			ang = Angle(100, 0, 90)
 		}
+	},
+	["Nazi-helmet"] = {
+		PrintName = "Nazi-helmet",
+		mdl = "models/parts/german_helmet.mdl", -- tarkov
+		slots = {
+			head = .6
+		},
+		def = BasicArmorProtectionProfile,
+		bon = "ValveBiped.Bip01_Head1",
+		siz = Vector(1.05, 1, 1.07),
+		pos = Vector(1.4, -3, 1),
+		ang = Angle(-80, 0, -90),
+		wgt = 10,
+		dur = 200,
+		ent = "ent_jack_gmod_ezarmor_nazihead"
+	},
+	["Western-helmet"] = {
+		PrintName = "Western-helmet",
+		mdl = "models/parts/us_helmet.mdl", -- tarkov
+		slots = {
+			head = .6
+		},
+		def = BasicArmorProtectionProfile,
+		bon = "ValveBiped.Bip01_Head1",
+		siz = Vector(1, 1, 1),
+		pos = Vector(1, -3, 1),
+		ang = Angle(-80, 0, -90),
+		wgt = 10,
+		dur = 200,
+		ent = "ent_jack_gmod_ezarmor_ushead"
+	},
+	["schirmmuetze"] = {
+		PrintName = "schirmmuetze",
+		mdl = "models/codww2/german/schirmmuetze.mdl", -- tarkov
+		slots = {
+			head = 0
+		},
+		def = BasicArmorProtectionProfile,
+		bon = "ValveBiped.Bip01_Head1",
+		siz = Vector(1, 1.1, 1),
+		pos = Vector(1, 1.4, 0.1),
+		ang = Angle(-90, -25, 180),
+		wgt = 10,
+		dur = 200,
+		ent = "ent_jack_gmod_ezarmor_schirmmuetze"
 	},
 	["Glasses"] = {
 		PrintName = "Glasses",
@@ -1075,7 +1120,7 @@ function JMod.GetArmorBiologicalResistance(ply, typ)
 			if not armorData.tgl then
 				local ArmorInfo = JMod.ArmorTable[armorData.name]
 
-				if not (ArmorInfo.chrg and ArmorInfo.chrg.chemicals and armorData.chrg.chemicals <= 0) then
+				if ArmorInfo.def and (ArmorInfo.chrg and ArmorInfo.chrg.chemicals and armorData.chrg.chemicals >= 0) then
 					skinResist = skinResist + (ArmorInfo.def[typ] or 0) * ((ArmorInfo.slots.chest or 0) + (ArmorInfo.slots.abdomen or 0)) / 2
 					faceResist = faceResist + (ArmorInfo.def[typ] or 0) * ((ArmorInfo.slots.eyes or 0) + (ArmorInfo.slots.mouthnose or 0)) / 2
 				end

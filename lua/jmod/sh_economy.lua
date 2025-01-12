@@ -1,4 +1,4 @@
-﻿JMod.NaturalResourceTable = JMod.NaturalResourceTable or {}
+JMod.NaturalResourceTable = JMod.NaturalResourceTable or {}
 
 JMod.SmeltingTable = {
 	[JMod.EZ_RESOURCE_TYPES.IRONORE] = {
@@ -213,7 +213,7 @@ JMod.ResourceDepositInfo = {
 			rock = 2
 		}
 	},
-	[JMod.EZ_RESOURCE_TYPES.URANIUMORE] = {
+	[JMod.EZ_RESOURCE_TYPES.URANIUM] = {
 		frequency = 1,
 		avgamt = 400,
 		avgsize = 200,
@@ -235,14 +235,14 @@ JMod.ResourceDepositInfo = {
 			rock = 2
 		}
 	},]]
-	[JMod.EZ_RESOURCE_TYPES.DIAMOND] = {
+	--[[[JMod.EZ_RESOURCE_TYPES.DIAMOND] = {
 		dependency = JMod.EZ_RESOURCE_TYPES.COAL,
 		frequency = .2,
 		avgamt = 80,
 		avgsize = 100,
 		limits = {}, -- covered by the limits of coal already
 		boosts = {}
-	},
+	},]]
 	["geothermal"] = {
 		frequency = 2,
 		avgrate = .5,
@@ -382,7 +382,7 @@ local SalvagingTable = {
 		[JMod.EZ_RESOURCE_TYPES.CHEMICALS] = .5
 	},
 	glassbottle = {
-		[JMod.EZ_RESOURCE_TYPES.WATER] = .4,
+		[JMod.EZ_RESOURCE_TYPES.WATER] = .6,
 		[JMod.EZ_RESOURCE_TYPES.ORGANICS] = .2,
 		[JMod.EZ_RESOURCE_TYPES.CHEMICALS] = .4
 	},
@@ -678,6 +678,7 @@ local SpecializedSalvagingTable = {
 			yield = {
 				[JMod.EZ_RESOURCE_TYPES.PLASTIC] = .1,
 				[JMod.EZ_RESOURCE_TYPES.CHEMICALS] = .9,
+				[JMod.EZ_RESOURCE_TYPES.WATER] = .5,
 			}
 		},
 		{
@@ -1397,6 +1398,8 @@ if SERVER then
 		local Time = CurTime()
 		local Debug = (args and args[1]) or false --JMod.IsAdmin(ply) and GetConVar("sv_cheats"):GetBool()
 
+		--print("govno")
+		
 		if Debug then
 			if not JMod.IsAdmin(ply) then print("JMod: This console command only works for admins") return end
 			if not GetConVar("sv_cheats"):GetBool() then print("JMod: This needs sv_cheats set to 1") return end
@@ -1426,6 +1429,7 @@ if SERVER then
 				end
 			end
 		end
+
 		
 		local ScroungeResults = {}
 		for i = 1, 100 do
@@ -1549,7 +1553,7 @@ if SERVER then
 	end
 
 	concommand.Add("jmod_debug_scrounge", function(ply, cmd, args)
-		if not GetConVar("sv_cheats"):GetBool() then print("JMod: This needs sv_cheats set to 1") return end
+		--if not GetConVar("sv_cheats"):GetBool() then print("JMod: This needs sv_cheats set to 1") return end
 		if IsValid(ply) and not JMod.IsAdmin(ply) then return end
 		JMod.EZ_ScroungeArea(ply, nil, {true})
 	end, nil, "Test scrounging without any modifiers")

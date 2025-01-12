@@ -1,4 +1,4 @@
-﻿-- Jackarunda 2021
+-- Jackarunda 2021
 AddCSLuaFile()
 ENT.Type = "anim"
 ENT.Author = "Jackarunda"
@@ -222,7 +222,7 @@ if(SERVER)then
 					end
 				end
 
-				JMod.EmitAIsound(self:GetPos(), 300, .5, 256)
+				--JMod.EmitAIsound(self:GetPos(), 300, .5, 256)
 			end
 		end
 	end

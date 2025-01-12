@@ -1,4 +1,4 @@
-﻿-- Jackarunda 2021
+-- Jackarunda 2021
 AddCSLuaFile()
 ENT.Base = "ent_jack_gmod_ezbomb"
 ENT.Author = "Jackarunda"
@@ -74,7 +74,7 @@ if SERVER then
 		if (self:GetState() == STATE_ARMED) and (Phys:GetVelocity():Length() > 400) and not self:IsPlayerHolding() and not constraint.HasConstraints(self) then
 			self.FreefallTicks = self.FreefallTicks + 1
 
-			if self.FreefallTicks >= 10 then
+			if self.FreefallTicks >= 5 then
 				local Tr = util.QuickTrace(self:GetPos(), Phys:GetVelocity():GetNormalized() * 1200, self)
 
 				if Tr.Hit then
